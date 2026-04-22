@@ -17,7 +17,11 @@ interface DashboardStats {
   disciplineScore: number;
 }
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onNewTask?: () => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ onNewTask }) => {
   const [stats, setStats] = useState<DashboardStats>({
     totalTasks: 0,
     pendingTasks: 0,
@@ -28,7 +32,6 @@ const Dashboard: React.FC = () => {
     disciplineScore: 85
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -76,35 +79,13 @@ const Dashboard: React.FC = () => {
             Export Report
           </button>
           <button 
-            onClick={() => setIsTaskModalOpen(true)}
+            onClick={onNewTask}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-200"
           >
             + New Task
           </button>
         </div>
       </header>
-
-      {/* Task Modal Popup */}
-      {isTaskModalOpen && (
-        <div className="fixed inset-0 z-[60] overflow-y-auto">
-          <div 
-            className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity" 
-            onClick={() => setIsTaskModalOpen(false)}
-          />
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-2xl transform transition-all animate-in fade-in zoom-in duration-200">
-              <TaskForm 
-                onCancel={() => setIsTaskModalOpen(false)} 
-                onSubmit={(data) => {
-                  console.log('Task Created:', data);
-                  setIsTaskModalOpen(false);
-                  // Refresh stats here in a real app
-                }} 
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
         <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -220,7 +201,9 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <TaskList tasks={stats.recentTasks} isLoading={isLoading} />
+        <div className="lg:col-span-2">
+          <TaskList tasks={stats.recentTasks} isLoading={isLoading} />
+        </div>
       </div>
     </div>
   );

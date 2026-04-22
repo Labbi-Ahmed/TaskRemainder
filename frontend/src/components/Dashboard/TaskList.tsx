@@ -11,22 +11,28 @@ interface Task {
 interface TaskListProps {
   tasks: Task[];
   isLoading: boolean;
+  title?: string;
+  showViewAll?: boolean;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading }) => {
-  const pendingTasks = tasks.filter(t => t.status === 'Pending');
+const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, title = 'Urgent Tasks', showViewAll = true }) => {
+  // If it's the dashboard "Urgent Tasks", we might want to filter, 
+  // but for the Task List page, we want to show exactly what's passed (which is already filtered)
+  const displayTasks = title === 'Urgent Tasks' ? tasks.filter(t => t.status === 'Pending') : tasks;
 
   return (
-    <div className="lg:col-span-2 bg-white rounded-xl shadow-md overflow-hidden flex flex-col">
+    <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col w-full">
       <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-        <h3 className="text-lg font-bold text-gray-800">Urgent Tasks</h3>
-        <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500">View All</button>
+        <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+        {showViewAll && (
+          <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500">View All</button>
+        )}
       </div>
       <div className="divide-y divide-gray-100 flex-grow">
         {isLoading ? (
           <div className="p-8 text-center text-gray-400">Loading your tasks...</div>
-        ) : pendingTasks.length > 0 ? (
-          pendingTasks.map((task) => (
+        ) : displayTasks.length > 0 ? (
+          displayTasks.map((task) => (
             <div key={task.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition duration-150">
               <div className="flex items-center overflow-hidden">
                 <div className={`flex-shrink-0 w-2 h-2 rounded-full mr-4 ${
@@ -40,20 +46,27 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading }) => {
                   </p>
                 </div>
               </div>
-              <div className="flex space-x-1 ml-4">
-                <button className="p-2 text-gray-400 hover:text-green-600 transition duration-150" title="Complete">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                </button>
-                <button className="p-2 text-gray-400 hover:text-indigo-600 transition duration-150" title="Edit">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M17.114 8.454a2.121 2.121 0 00-3 0l-9.586 9.586V21h2.96l9.586-9.586a2.121 2.121 0 000-3l-1.114-1.114z" /></svg>
-                </button>
+              <div className="flex items-center space-x-3 ml-4">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
+                  task.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                }`}>
+                  {task.status}
+                </span>
+                <div className="flex space-x-1">
+                  <button className="p-2 text-gray-400 hover:text-green-600 transition duration-150" title="Complete">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  </button>
+                  <button className="p-2 text-gray-400 hover:text-indigo-600 transition duration-150" title="Edit">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M17.114 8.454a2.121 2.121 0 00-3 0l-9.586 9.586V21h2.96l9.586-9.586a2.121 2.121 0 000-3l-1.114-1.114z" /></svg>
+                  </button>
+                </div>
               </div>
             </div>
           ))
         ) : (
           <div className="p-12 flex flex-col items-center justify-center text-gray-400">
-            <svg className="h-12 w-12 mb-4 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-            <p>No urgent tasks. Relax!</p>
+            <svg className="h-12 w-12 mb-4 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            <p>No tasks found matching your filters.</p>
           </div>
         )}
       </div>
