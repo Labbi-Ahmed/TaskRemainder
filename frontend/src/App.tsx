@@ -31,7 +31,7 @@ function App() {
       case 'dashboard':
         return <Dashboard />;
       default:
-        return <LoginPage onToggle={() => setCurrentPage('register')} />;
+        return <LoginPage onToggle={() => setCurrentPage('register')} onLogin={() => setCurrentPage('dashboard')} />;
     }
   };
 

@@ -5,7 +5,7 @@ import RegistrationForm from './RegistrationForm';
 
 describe('RegistrationForm', () => {
   test('renders registration form with all fields', () => {
-    render(<RegistrationForm />);
+    render(<RegistrationForm onToggle={jest.fn()} />);
 
     expect(screen.getByRole('heading', { name: /register/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
@@ -15,7 +15,7 @@ describe('RegistrationForm', () => {
   });
 
   test('updates input fields on change', () => {
-    render(<RegistrationForm />);
+    render(<RegistrationForm onToggle={jest.fn()} />);
     const usernameInput = screen.getByLabelText(/username/i);
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
@@ -30,7 +30,7 @@ describe('RegistrationForm', () => {
   });
 
   test('displays validation errors for empty fields on submit', async () => {
-    render(<RegistrationForm />);
+    render(<RegistrationForm onToggle={jest.fn()} />);
     const registerButton = screen.getByRole('button', { name: /register/i });
 
     fireEvent.click(registerButton);
@@ -41,7 +41,7 @@ describe('RegistrationForm', () => {
   });
 
   test('displays validation errors for invalid email format', async () => {
-    render(<RegistrationForm />);
+    render(<RegistrationForm onToggle={jest.fn()} />);
     const emailInput = screen.getByLabelText(/email/i);
     const registerButton = screen.getByRole('button', { name: /register/i });
 
@@ -52,7 +52,7 @@ describe('RegistrationForm', () => {
   });
 
   test('displays validation errors for weak password', async () => {
-    render(<RegistrationForm />);
+    render(<RegistrationForm onToggle={jest.fn()} />);
     const passwordInput = screen.getByLabelText(/password/i);
     const registerButton = screen.getByRole('button', { name: /register/i });
 
@@ -66,7 +66,7 @@ describe('RegistrationForm', () => {
   });
 
   test('submits the form successfully with valid data', async () => {
-    render(<RegistrationForm />);
+    render(<RegistrationForm onToggle={jest.fn()} />);
     const usernameInput = screen.getByLabelText(/username/i);
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);

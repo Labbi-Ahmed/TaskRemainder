@@ -5,7 +5,7 @@ import LoginPage from './LoginPage';
 
 describe('LoginPage', () => {
   test('renders login form with email/username and password fields', () => {
-    render(<LoginPage />);
+    render(<LoginPage onToggle={jest.fn()} onLogin={jest.fn()} />);
 
     expect(screen.getByLabelText(/email address or username/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
@@ -15,7 +15,7 @@ describe('LoginPage', () => {
   });
 
   test('shows error message on empty submission', async () => {
-    render(<LoginPage />);
+    render(<LoginPage onToggle={jest.fn()} onLogin={jest.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
@@ -23,7 +23,7 @@ describe('LoginPage', () => {
   });
 
   test('allows typing in email/username and password fields', () => {
-    render(<LoginPage />);
+    render(<LoginPage onToggle={jest.fn()} onLogin={jest.fn()} />);
 
     const emailInput = screen.getByLabelText(/email address or username/i);
     const passwordInput = screen.getByLabelText(/password/i);
@@ -36,7 +36,7 @@ describe('LoginPage', () => {
   });
 
   test('shows loading state on submission', async () => {
-    render(<LoginPage />);
+    render(<LoginPage onToggle={jest.fn()} onLogin={jest.fn()} />);
 
     const emailInput = screen.getByLabelText(/email address or username/i);
     const passwordInput = screen.getByLabelText(/password/i);
@@ -52,7 +52,7 @@ describe('LoginPage', () => {
   });
 
   test('shows success message on successful login (simulated)', async () => {
-    render(<LoginPage />);
+    render(<LoginPage onToggle={jest.fn()} onLogin={jest.fn()} />);
 
     const emailInput = screen.getByLabelText(/email address or username/i);
     const passwordInput = screen.getByLabelText(/password/i);
