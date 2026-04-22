@@ -13,6 +13,7 @@ function App() {
   const [activeView, setActiveView] = useState('dashboard');
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<any>(null);
   
   // Search and Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,7 +23,7 @@ function App() {
   const [showTodayOnly, setShowTodayOnly] = useState(false);
 
   // Mock tasks for the Task List page
-  const mockTasks = [
+  const [tasks, setTasks] = useState([
     { id: 1, title: 'Finalize project proposal', dueDate: '2026-04-22T17:00:00Z', priority: 'High', status: 'Pending' },
     { id: 2, title: 'Team standup meeting', dueDate: '2026-04-22T10:00:00Z', priority: 'Medium', status: 'Pending' },
     { id: 3, title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed' },
@@ -30,9 +31,24 @@ function App() {
     { id: 5, title: 'Weekly task review', dueDate: '2026-04-24T16:00:00Z', priority: 'Medium', status: 'Pending' },
     { id: 6, title: 'Check new YouTube tutorials', dueDate: '2026-04-25T11:00:00Z', priority: 'Low', status: 'Pending' },
     { id: 7, title: 'Grocery shopping', dueDate: '2026-04-22T19:00:00Z', priority: 'Medium', status: 'Pending' },
-  ];
+  ]);
 
-  const filteredTasks = mockTasks.filter(task => {
+  const handleToggleTaskStatus = (taskId: number) => {
+    setTasks(prevTasks => 
+      prevTasks.map(task => 
+        task.id === taskId 
+          ? { ...task, status: task.status === 'Completed' ? 'Pending' : 'Completed' }
+          : task
+      )
+    );
+  };
+
+  const handleEditTask = (task: any) => {
+    setEditingTask(task);
+    setIsTaskModalOpen(true);
+  };
+
+  const filteredTasks = tasks.filter(task => {
     // Search filter
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -40,14 +56,17 @@ function App() {
     const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
     
     // Date/Today filter
+    const todayStr = new Date('2026-04-22').toISOString().split('T')[0];
     const taskDateStr = new Date(task.dueDate).toISOString().split('T')[0];
     const taskDate = new Date(taskDateStr).getTime();
     
-    let matchesDate = true;
-    
     if (showTodayOnly) {
-      matchesDate = taskDateStr === '2026-04-22';
-    } else if (startDate || endDate) {
+      // For "Due Today", we only want Pending tasks due on the current date
+      return matchesSearch && taskDateStr === todayStr && task.status === 'Pending';
+    }
+    
+    let matchesDate = true;
+    if (startDate || endDate) {
       const start = startDate ? new Date(startDate).getTime() : -Infinity;
       const end = endDate ? new Date(endDate).getTime() : Infinity;
       matchesDate = taskDate >= start && taskDate <= end;
@@ -67,8 +86,14 @@ function App() {
       case 'dashboard':
         return (
           <Dashboard 
-            onNewTask={() => setIsTaskModalOpen(true)} 
+            tasks={tasks}
+            onNewTask={() => {
+              setEditingTask(null);
+              setIsTaskModalOpen(true);
+            }} 
             onViewChange={setActiveView}
+            onToggleStatus={handleToggleTaskStatus}
+            onEdit={handleEditTask}
           />
         );
       case 'tasks':
@@ -80,7 +105,10 @@ function App() {
                 <p className="mt-1 text-gray-600">All your saved items and reminders in one place.</p>
               </div>
               <button 
-                onClick={() => setIsTaskModalOpen(true)}
+                onClick={() => {
+                  setEditingTask(null);
+                  setIsTaskModalOpen(true);
+                }}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-200"
               >
                 + New Task
@@ -101,9 +129,7 @@ function App() {
                     placeholder="Search tasks..."
                     className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150"
                     value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                    }}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
                 
@@ -111,9 +137,7 @@ function App() {
                   <select 
                     className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg"
                     value={statusFilter}
-                    onChange={(e) => {
-                      setStatusFilter(e.target.value);
-                    }}
+                    onChange={(e) => setStatusFilter(e.target.value)}
                   >
                     <option value="All">All Status</option>
                     <option value="Pending">Pending</option>
@@ -154,12 +178,10 @@ function App() {
                   <button 
                     onClick={() => {
                       if (!showTodayOnly) {
-                        // Activate Due Today and clear only the manual date range
                         setShowTodayOnly(true);
                         setStartDate('');
                         setEndDate('');
                       } else {
-                        // Deactivate Due Today
                         setShowTodayOnly(false);
                       }
                     }}
@@ -191,7 +213,14 @@ function App() {
             </div>
 
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
-              <TaskList tasks={filteredTasks} isLoading={false} title="Active Tasks" showViewAll={false} />
+              <TaskList 
+                tasks={filteredTasks} 
+                isLoading={false} 
+                title="Active Tasks" 
+                showViewAll={false} 
+                onToggleStatus={handleToggleTaskStatus}
+                onEdit={handleEditTask}
+              />
             </div>
           </div>
         );
@@ -257,7 +286,18 @@ function App() {
           </div>
         );
       default:
-        return <Dashboard />;
+        return (
+          <Dashboard 
+            tasks={tasks}
+            onNewTask={() => {
+              setEditingTask(null);
+              setIsTaskModalOpen(true);
+            }} 
+            onViewChange={setActiveView}
+            onToggleStatus={handleToggleTaskStatus}
+            onEdit={handleEditTask}
+          />
+        );
     }
   };
 
@@ -287,10 +327,26 @@ function App() {
                 <div className="flex min-h-full items-center justify-center p-4">
                   <div className="relative w-full max-w-2xl transform transition-all animate-in fade-in zoom-in duration-200">
                     <TaskForm 
-                      onCancel={() => setIsTaskModalOpen(false)} 
-                      onSubmit={(data) => {
-                        console.log('Task Created:', data);
+                      initialData={editingTask}
+                      onCancel={() => {
                         setIsTaskModalOpen(false);
+                        setEditingTask(null);
+                      }} 
+                      onSubmit={(data) => {
+                        if (editingTask) {
+                          // Update existing task
+                          setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...data } : t));
+                        } else {
+                          // Add new task
+                          const newTask = {
+                            ...data,
+                            id: tasks.length + 1,
+                            status: 'Pending'
+                          };
+                          setTasks(prev => [newTask, ...prev]);
+                        }
+                        setIsTaskModalOpen(false);
+                        setEditingTask(null);
                       }} 
                     />
                   </div>

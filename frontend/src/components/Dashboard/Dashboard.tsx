@@ -17,11 +17,14 @@ interface DashboardStats {
 }
 
 interface DashboardProps {
+  tasks: any[];
   onNewTask?: () => void;
   onViewChange?: (view: string) => void;
+  onToggleStatus?: (taskId: number) => void;
+  onEdit?: (task: any) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNewTask, onViewChange }) => {
+const Dashboard: React.FC<DashboardProps> = ({ tasks, onNewTask, onViewChange, onToggleStatus, onEdit }) => {
   const [stats, setStats] = useState<DashboardStats>({
     totalTasks: 0,
     pendingTasks: 0,
@@ -204,9 +207,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNewTask, onViewChange }) => {
 
         <div className="lg:col-span-2">
           <TaskList 
-            tasks={stats.recentTasks} 
+            tasks={tasks} 
             isLoading={isLoading} 
             onViewChange={() => onViewChange?.('tasks')}
+            onToggleStatus={onToggleStatus}
+            onEdit={onEdit}
           />
         </div>
       </div>
