@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import StatCard from './StatCard';
 import TaskList from './TaskList';
+import TaskForm from './TaskForm';
 
 interface DashboardStats {
   totalTasks: number;
@@ -27,6 +28,7 @@ const Dashboard: React.FC = () => {
     disciplineScore: 85
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -73,11 +75,36 @@ const Dashboard: React.FC = () => {
           <button className="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg shadow-sm hover:bg-gray-50 transition duration-200">
             Export Report
           </button>
-          <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-200">
+          <button 
+            onClick={() => setIsTaskModalOpen(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-200"
+          >
             + New Task
           </button>
         </div>
       </header>
+
+      {/* Task Modal Popup */}
+      {isTaskModalOpen && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
+          <div 
+            className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity" 
+            onClick={() => setIsTaskModalOpen(false)}
+          />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-2xl transform transition-all animate-in fade-in zoom-in duration-200">
+              <TaskForm 
+                onCancel={() => setIsTaskModalOpen(false)} 
+                onSubmit={(data) => {
+                  console.log('Task Created:', data);
+                  setIsTaskModalOpen(false);
+                  // Refresh stats here in a real app
+                }} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
         <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
