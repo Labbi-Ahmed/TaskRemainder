@@ -96,7 +96,9 @@ function App() {
                     placeholder="Search tasks..."
                     className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                    }}
                   />
                 </div>
                 
@@ -104,7 +106,9 @@ function App() {
                   <select 
                     className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg"
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                    }}
                   >
                     <option value="All">All Status</option>
                     <option value="Pending">Pending</option>
@@ -132,7 +136,7 @@ function App() {
                       onSelectRange={(start, end) => {
                         setStartDate(start);
                         setEndDate(end);
-                        setShowTodayOnly(false);
+                        if (start) setShowTodayOnly(false);
                       }}
                       onClose={() => setIsCalendarOpen(false)}
                     />
@@ -144,10 +148,14 @@ function App() {
                 <div className="flex items-center space-x-4">
                   <button 
                     onClick={() => {
-                      setShowTodayOnly(!showTodayOnly);
                       if (!showTodayOnly) {
+                        // Activate Due Today and clear only the manual date range
+                        setShowTodayOnly(true);
                         setStartDate('');
                         setEndDate('');
+                      } else {
+                        // Deactivate Due Today
+                        setShowTodayOnly(false);
                       }
                     }}
                     className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
