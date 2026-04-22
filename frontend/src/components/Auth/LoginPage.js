@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const LoginPage = ({ onToggle }) => {
+const LoginPage = ({ onToggle, onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,6 +24,10 @@ const LoginPage = ({ onToggle }) => {
       console.log('Attempting login with:', { email, password });
       await new Promise(resolve => setTimeout(resolve, 1500));
       setSuccess('Login successful! Redirecting...');
+      // Small delay before redirecting for better UX
+      setTimeout(() => {
+        if (onLogin) onLogin();
+      }, 500);
     } catch (err) {
       setError('Login failed. Please check your credentials.');
     } finally {
