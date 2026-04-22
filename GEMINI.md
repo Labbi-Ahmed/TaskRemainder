@@ -19,7 +19,7 @@ Users often save YouTube videos, articles, or social media posts but rarely come
 *   **Dashboard:** Visual overview of upcoming, missed, and completed tasks with a "Life Discipline Score".
 
 ## 🛠️ Technology Stack
-*   **Frontend:** React (TypeScript, Tailwind CSS)
+*   **Frontend:** React (TypeScript, Tailwind CSS, TanStack Query for State/Data)
 *   **Backend:** Spring Boot (Java)
 *   **Database:** PostgreSQL
 

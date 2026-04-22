@@ -13,9 +13,10 @@ interface TaskListProps {
   isLoading: boolean;
   title?: string;
   showViewAll?: boolean;
+  onViewChange?: () => void;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, title = 'Urgent Tasks', showViewAll = true }) => {
+const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, title = 'Urgent Tasks', showViewAll = true, onViewChange }) => {
   // If it's the dashboard "Urgent Tasks", we might want to filter, 
   // but for the Task List page, we want to show exactly what's passed (which is already filtered)
   const displayTasks = title === 'Urgent Tasks' ? tasks.filter(t => t.status === 'Pending') : tasks;
@@ -25,7 +26,12 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, title = 'Urgent T
       <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
         <h3 className="text-lg font-bold text-gray-800">{title}</h3>
         {showViewAll && (
-          <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500">View All</button>
+          <button 
+            onClick={onViewChange}
+            className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            View All
+          </button>
         )}
       </div>
       <div className="divide-y divide-gray-100 flex-grow">

@@ -65,7 +65,12 @@ function App() {
   const renderDashboardView = () => {
     switch(activeView) {
       case 'dashboard':
-        return <Dashboard onNewTask={() => setIsTaskModalOpen(true)} />;
+        return (
+          <Dashboard 
+            onNewTask={() => setIsTaskModalOpen(true)} 
+            onViewChange={setActiveView}
+          />
+        );
       case 'tasks':
         return (
           <div className="max-w-6xl mx-auto px-4 py-8">
