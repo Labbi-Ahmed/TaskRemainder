@@ -78,9 +78,6 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, onNewTask, onViewChange, o
           <p className="mt-1 text-gray-600">Welcome back! Stay disciplined, stay productive.</p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg shadow-sm hover:bg-gray-50 transition duration-200">
-            Export Report
-          </button>
           <button 
             onClick={onNewTask}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-200"
