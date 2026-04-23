@@ -11,12 +11,27 @@ interface TaskFormProps {
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData }) => {
+  // Format initial date for datetime-local input (YYYY-MM-DDTHH:mm)
+  const formatInitialDate = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     contentLink: initialData?.contentLink || '',
     description: initialData?.description || '',
     notes: initialData?.notes || '',
-    dueDate: initialData?.dueDate || '',
+    dueDate: formatInitialDate(initialData?.dueDate),
     priority: initialData?.priority || 'Medium',
     category: initialData?.category || '',
     tags: initialData?.tags || '',
@@ -59,7 +74,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData }) 
     try {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      onSubmit(formData);
+      
+      // Convert dueDate to ISO string for storage/backend consistency
+      const taskData = {
+        ...formData,
+        dueDate: new Date(formData.dueDate).toISOString()
+      };
+      
+      onSubmit(taskData);
     } catch (error) {
       console.error('Failed to submit task:', error);
     } finally {

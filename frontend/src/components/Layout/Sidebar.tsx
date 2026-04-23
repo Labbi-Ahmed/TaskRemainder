@@ -126,6 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, collapsed, 
 
       <div className="p-4 border-t border-gray-50">
         <button 
+          onClick={onLogout}
           className="flex items-center w-full p-3 text-red-500 hover:bg-red-50 rounded-lg transition duration-150 group"
         >
           <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3 3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>

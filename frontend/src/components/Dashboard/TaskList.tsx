@@ -13,9 +13,20 @@ interface TaskListProps {
   isLoading: boolean;
   title?: string;
   showViewAll?: boolean;
+  onViewChange?: () => void;
+  onToggleStatus?: (taskId: number) => void;
+  onEdit?: (task: any) => void;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, title = 'Urgent Tasks', showViewAll = true }) => {
+const TaskList: React.FC<TaskListProps> = ({ 
+  tasks, 
+  isLoading, 
+  title = 'Urgent Tasks', 
+  showViewAll = true, 
+  onViewChange,
+  onToggleStatus,
+  onEdit
+}) => {
   // If it's the dashboard "Urgent Tasks", we might want to filter, 
   // but for the Task List page, we want to show exactly what's passed (which is already filtered)
   const displayTasks = title === 'Urgent Tasks' ? tasks.filter(t => t.status === 'Pending') : tasks;
@@ -25,7 +36,12 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, title = 'Urgent T
       <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
         <h3 className="text-lg font-bold text-gray-800">{title}</h3>
         {showViewAll && (
-          <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500">View All</button>
+          <button 
+            onClick={onViewChange}
+            className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            View All
+          </button>
         )}
       </div>
       <div className="divide-y divide-gray-100 flex-grow">
@@ -40,7 +56,9 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, title = 'Urgent T
                   task.priority === 'Medium' ? 'bg-yellow-500' : 'bg-green-500'
                 }`} />
                 <div className="truncate">
-                  <h4 className="text-sm font-semibold text-gray-800 truncate">{task.title}</h4>
+                  <h4 className={`text-sm font-semibold truncate ${task.status === 'Completed' ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                    {task.title}
+                  </h4>
                   <p className="text-xs text-gray-500 mt-1">
                     Due: {new Date(task.dueDate).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
                   </p>
@@ -53,10 +71,18 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, title = 'Urgent T
                   {task.status}
                 </span>
                 <div className="flex space-x-1">
-                  <button className="p-2 text-gray-400 hover:text-green-600 transition duration-150" title="Complete">
+                  <button 
+                    onClick={() => onToggleStatus?.(task.id)}
+                    className={`p-2 transition duration-150 ${task.status === 'Completed' ? 'text-green-600' : 'text-gray-400 hover:text-green-600'}`} 
+                    title={task.status === 'Completed' ? "Mark as Pending" : "Mark as Completed"}
+                  >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                   </button>
-                  <button className="p-2 text-gray-400 hover:text-indigo-600 transition duration-150" title="Edit">
+                  <button 
+                    onClick={() => onEdit?.(task)}
+                    className="p-2 text-gray-400 hover:text-indigo-600 transition duration-150" 
+                    title="Edit"
+                  >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M17.114 8.454a2.121 2.121 0 00-3 0l-9.586 9.586V21h2.96l9.586-9.586a2.121 2.121 0 000-3l-1.114-1.114z" /></svg>
                   </button>
                 </div>

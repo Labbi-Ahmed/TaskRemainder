@@ -17,10 +17,14 @@ interface DashboardStats {
 }
 
 interface DashboardProps {
+  tasks: any[];
   onNewTask?: () => void;
+  onViewChange?: (view: string) => void;
+  onToggleStatus?: (taskId: number) => void;
+  onEdit?: (task: any) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNewTask }) => {
+const Dashboard: React.FC<DashboardProps> = ({ tasks, onNewTask, onViewChange, onToggleStatus, onEdit }) => {
   const [stats, setStats] = useState<DashboardStats>({
     totalTasks: 0,
     pendingTasks: 0,
@@ -74,9 +78,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNewTask }) => {
           <p className="mt-1 text-gray-600">Welcome back! Stay disciplined, stay productive.</p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg shadow-sm hover:bg-gray-50 transition duration-200">
-            Export Report
-          </button>
           <button 
             onClick={onNewTask}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-200"
@@ -115,6 +116,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNewTask }) => {
             color="border-red-500"
             isLoading={isLoading}
             icon={<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+            onClick={() => onViewChange?.('tasks')}
           />
         </div>
 
@@ -201,7 +203,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNewTask }) => {
         </div>
 
         <div className="lg:col-span-2">
-          <TaskList tasks={stats.recentTasks} isLoading={isLoading} />
+          <TaskList 
+            tasks={tasks} 
+            isLoading={isLoading} 
+            onViewChange={() => onViewChange?.('tasks')}
+            onToggleStatus={onToggleStatus}
+            onEdit={onEdit}
+          />
         </div>
       </div>
     </div>
