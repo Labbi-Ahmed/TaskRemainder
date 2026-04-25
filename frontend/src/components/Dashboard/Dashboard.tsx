@@ -22,9 +22,10 @@ interface DashboardProps {
   onViewChange?: (view: string) => void;
   onToggleStatus?: (taskId: number) => void;
   onEdit?: (task: any) => void;
+  onDelete?: (taskId: number) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ tasks, onNewTask, onViewChange, onToggleStatus, onEdit }) => {
+const Dashboard: React.FC<DashboardProps> = ({ tasks, onNewTask, onViewChange, onToggleStatus, onEdit, onDelete }) => {
   const [stats, setStats] = useState<DashboardStats>({
     totalTasks: 0,
     pendingTasks: 0,
@@ -209,6 +210,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, onNewTask, onViewChange, o
             onViewChange={() => onViewChange?.('tasks')}
             onToggleStatus={onToggleStatus}
             onEdit={onEdit}
+            onDelete={onDelete}
           />
         </div>
       </div>

@@ -48,6 +48,10 @@ function App() {
     setIsTaskModalOpen(true);
   };
 
+  const handleDeleteTask = (taskId: number) => {
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+  };
+
   const filteredTasks = tasks.filter(task => {
     // Search filter
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -94,6 +98,7 @@ function App() {
             onViewChange={setActiveView}
             onToggleStatus={handleToggleTaskStatus}
             onEdit={handleEditTask}
+            onDelete={handleDeleteTask}
           />
         );
       case 'tasks':
@@ -220,6 +225,7 @@ function App() {
                 showViewAll={false} 
                 onToggleStatus={handleToggleTaskStatus}
                 onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
               />
             </div>
           </div>
