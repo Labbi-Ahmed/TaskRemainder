@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ConfirmationModal from '../Common/ConfirmationModal';
+import { TaskSkeleton } from '../Common/Skeleton';
 
 interface Task {
   id: number;
@@ -118,7 +119,13 @@ const TaskList: React.FC<TaskListProps> = ({
       </div>
       <div className="divide-y divide-gray-100 flex-grow relative">
         {isLoading ? (
-          <div className="p-8 text-center text-gray-400">Loading your tasks...</div>
+          <>
+            <TaskSkeleton />
+            <TaskSkeleton />
+            <TaskSkeleton />
+            <TaskSkeleton />
+            <TaskSkeleton />
+          </>
         ) : displayTasks.length > 0 ? (
           displayTasks.map((task) => (
             <div key={task.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition duration-150">

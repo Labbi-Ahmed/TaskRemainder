@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import RegistrationForm from './components/Auth/RegistrationForm';
 import LoginPage from './components/Auth/LoginPage';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -6,11 +6,21 @@ import DashboardLayout from './components/Layout/DashboardLayout';
 import TaskForm from './components/Dashboard/TaskForm';
 import TaskList from './components/Dashboard/TaskList';
 import Calendar from './components/Common/Calendar';
+import { authUtils } from './utils/auth';
 import './App.css';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('login');
-  const [activeView, setActiveView] = useState('dashboard');
+  // Initialize state from localStorage or defaults
+  const [currentPage, setCurrentPage] = useState(() => {
+    if (authUtils.isAuthenticated()) return 'dashboard';
+    return 'login';
+  });
+  
+  const [activeView, setActiveView] = useState(() => {
+    return authUtils.getView() || 'dashboard';
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
@@ -22,7 +32,43 @@ function App() {
   const [endDate, setEndDate] = useState('');
   const [showTodayOnly, setShowTodayOnly] = useState(false);
 
-  // Mock tasks for the Task List page
+  // Persistence and loading simulation for activeView
+  useEffect(() => {
+    if (currentPage === 'dashboard') {
+      authUtils.setView(activeView);
+      
+      // Simulate loading when view changes
+      setIsLoading(true);
+      const timer = setTimeout(() => setIsLoading(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [activeView, currentPage]);
+
+  // Sync auth state if changed elsewhere
+  useEffect(() => {
+    const checkAuth = () => {
+      if (authUtils.isAuthenticated() && currentPage === 'login') {
+        setCurrentPage('dashboard');
+      } else if (!authUtils.isAuthenticated() && currentPage === 'dashboard') {
+        setCurrentPage('login');
+      }
+    };
+    
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, [currentPage]);
+
+  const handleLogout = () => {
+    authUtils.logout();
+    setCurrentPage('login');
+    setActiveView('dashboard');
+  };
+
+  const handleLogin = () => {
+    setCurrentPage('dashboard');
+  };
+
+  // Mock tasks
   const [tasks, setTasks] = useState([
     { id: 1, title: 'Finalize project proposal', dueDate: '2026-04-22T17:00:00Z', priority: 'High', status: 'Pending' },
     { id: 2, title: 'Team standup meeting', dueDate: '2026-04-22T10:00:00Z', priority: 'Medium', status: 'Pending' },
@@ -53,19 +99,13 @@ function App() {
   };
 
   const filteredTasks = tasks.filter(task => {
-    // Search filter
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Status filter
     const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
-    
-    // Date/Today filter
     const todayStr = new Date('2026-04-22').toISOString().split('T')[0];
     const taskDateStr = new Date(task.dueDate).toISOString().split('T')[0];
     const taskDate = new Date(taskDateStr).getTime();
     
     if (showTodayOnly) {
-      // For "Due Today", we only want Pending tasks due on the current date
       return matchesSearch && taskDateStr === todayStr && task.status === 'Pending';
     }
     
@@ -91,6 +131,7 @@ function App() {
         return (
           <Dashboard 
             tasks={tasks}
+            isLoading={isLoading}
             onNewTask={() => {
               setEditingTask(null);
               setIsTaskModalOpen(true);
@@ -120,7 +161,6 @@ function App() {
               </button>
             </header>
 
-            {/* Filters and Search Bar */}
             <div className="mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col space-y-4">
               <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
                 <div className="flex-grow relative">
@@ -191,9 +231,7 @@ function App() {
                       }
                     }}
                     className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
-                      showTodayOnly 
-                        ? 'bg-indigo-600 text-white shadow-md' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      showTodayOnly ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
                     Due Today
@@ -220,7 +258,7 @@ function App() {
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <TaskList 
                 tasks={filteredTasks} 
-                isLoading={false} 
+                isLoading={isLoading} 
                 title="Active Tasks" 
                 showViewAll={false} 
                 onToggleStatus={handleToggleTaskStatus}
@@ -231,6 +269,10 @@ function App() {
           </div>
         );
       case 'library':
+      case 'schedule':
+      case 'categories':
+      case 'analytics':
+      case 'settings':
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <div className="w-24 h-24 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
@@ -238,79 +280,19 @@ function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.247 18.253 16.5 18.253" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">Library</h1>
-            <p className="text-gray-500 mt-2 max-w-md">Your saved content will appear here. We're still building this feature!</p>
-          </div>
-        );
-      case 'schedule':
-        return (
-          <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <div className="w-24 h-24 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800">Schedule</h1>
-            <p className="text-gray-500 mt-2 max-w-md">Plan your day and set reminders. Coming soon!</p>
-          </div>
-        );
-      case 'categories':
-        return (
-          <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <div className="w-24 h-24 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 11h.01M7 15h.01M11 7h.01M11 11h.01M11 15h.01M15 7h.01M15 11h.01M15 15h.01" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800">Categories & Tags</h1>
-            <p className="text-gray-500 mt-2 max-w-md">Organize your tasks with custom categories and tags. Under development.</p>
-          </div>
-        );
-      case 'analytics':
-        return (
-          <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <div className="w-24 h-24 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800">Analytics</h1>
-            <p className="text-gray-500 mt-2 max-w-md">Track your productivity and discipline score over time.</p>
-          </div>
-        );
-      case 'settings':
-        return (
-          <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <div className="w-24 h-24 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800">Settings</h1>
-            <p className="text-gray-500 mt-2 max-w-md">Manage your account and preferences.</p>
+            <h1 className="text-2xl font-bold text-gray-800 capitalize">{activeView}</h1>
+            <p className="text-gray-500 mt-2 max-w-md">This feature is coming soon!</p>
           </div>
         );
       default:
-        return (
-          <Dashboard 
-            tasks={tasks}
-            onNewTask={() => {
-              setEditingTask(null);
-              setIsTaskModalOpen(true);
-            }} 
-            onViewChange={setActiveView}
-            onToggleStatus={handleToggleTaskStatus}
-            onEdit={handleEditTask}
-          />
-        );
+        return null;
     }
   };
 
   const renderPage = () => {
     switch(currentPage) {
       case 'login':
-        return <LoginPage onToggle={() => setCurrentPage('register')} onLogin={() => setCurrentPage('dashboard')} />;
+        return <LoginPage onToggle={() => setCurrentPage('register')} onLogin={handleLogin} />;
       case 'register':
         return <RegistrationForm onToggle={() => setCurrentPage('login')} />;
       case 'dashboard':
@@ -318,12 +300,11 @@ function App() {
           <DashboardLayout 
             activeView={activeView} 
             onViewChange={setActiveView} 
-            onLogout={() => setCurrentPage('login')}
+            onLogout={handleLogout}
             onNewTask={() => setIsTaskModalOpen(true)}
           >
             {renderDashboardView()}
             
-            {/* Global Task Modal */}
             {isTaskModalOpen && (
               <div className="fixed inset-0 z-[100] overflow-y-auto">
                 <div 
@@ -340,10 +321,8 @@ function App() {
                       }} 
                       onSubmit={(data) => {
                         if (editingTask) {
-                          // Update existing task
                           setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...data } : t));
                         } else {
-                          // Add new task
                           const newTask = {
                             ...data,
                             id: tasks.length + 1,
@@ -362,7 +341,7 @@ function App() {
           </DashboardLayout>
         );
       default:
-        return <LoginPage onToggle={() => setCurrentPage('register')} onLogin={() => setCurrentPage('dashboard')} />;
+        return <LoginPage onToggle={() => setCurrentPage('register')} onLogin={handleLogin} />;
     }
   };
 
