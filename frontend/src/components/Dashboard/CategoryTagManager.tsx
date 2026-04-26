@@ -220,7 +220,7 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
                              <input type="color" value={editCategoryColor} onChange={(e) => setEditCategoryColor(e.target.value)} className="h-8 w-8 rounded border border-gray-300" />
                              <input type="text" value={editCategoryName} onChange={(e) => setEditCategoryName(e.target.value)} className="flex-grow px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500" autoFocus />
                              <button onClick={handleSaveEditCategory} className="p-1 text-green-600 hover:bg-green-100 rounded"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg></button>
-                             <button onClick={() => setEditingCategoryId(null)} className="p-1 text-gray-400"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6" /></svg></button>
+                             <button onClick={() => setEditingCategoryId(null)} className="p-1 text-red-500 hover:bg-red-100 rounded"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                         </div>
                     ) : (
                         <>
@@ -228,10 +228,10 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
                                 <div className="w-3 h-3 rounded-full shadow-inner" style={{ backgroundColor: category.color }} />
                                 <span className={`font-bold text-sm ${activeCategoryId === category.id ? 'text-indigo-900' : 'text-gray-700'}`}>{category.name}</span>
                             </div>
-                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={(e) => { e.stopPropagation(); handleStartEditCategory(category); }} className="p-1 text-gray-400 hover:text-indigo-600">
+                            <div className="flex items-center space-x-1 transition-opacity">
+                                <button onClick={(e) => { e.stopPropagation(); handleStartEditCategory(category); }} className="p-1 text-gray-600 hover:text-indigo-600">
 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                                <button onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, type: 'category', id: category.id, name: category.name }); }} className="p-1 text-gray-400 hover:text-red-500"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                                <button onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, type: 'category', id: category.id, name: category.name }); }} className="p-1 text-red-500 hover:text-red-700"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                             </div>
                         </>
                     )}
@@ -296,7 +296,20 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <span style={{ color: tag.color }}>{tag.name}</span>
-                      <button onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, type: 'tag', id: tag.id, name: tag.name }); }} className="opacity-0 group-hover:opacity-100 hover:text-red-600 transition-all"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6" /></svg></button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, type: 'tag', id: tag.id, name: tag.name }); }} 
+                        className="transition-all transform hover:scale-110 active:scale-95 group/del"
+                        style={{ color: tag.color }}
+                      >
+                        <svg 
+                          className="w-3.5 h-3.5 opacity-70 group-hover/del:opacity-100 transition-opacity" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
                     {tag.timeSlotId && (
                       <div className="flex items-center text-[10px] text-gray-400">

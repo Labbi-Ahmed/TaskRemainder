@@ -33,7 +33,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggle, onLogin }) => {
       console.log('Attempting login with:', { email, password });
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       // Mock successful login
       authUtils.setToken('mock-jwt-token');
       authUtils.setUser({
