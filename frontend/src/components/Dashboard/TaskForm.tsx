@@ -127,8 +127,18 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 800));
       
+      // CRITICAL FIX: Only save tags that belong to the currently selected category 
+      // (or global tags if no category is selected). This prevents "mixed" tags from appearing.
+      const validTags = formData.tags.filter(tagId => {
+        const tag = tags.find(t => t.id === tagId);
+        if (!tag) return false;
+        // If category is set, tag must match it. If category is empty, tag must be global.
+        return tag.categoryId === (formData.category || undefined);
+      });
+
       const taskData = {
         ...formData,
+        tags: validTags,
         dueDate: scheduleMode === 'custom' ? new Date(formData.dueDate).toISOString() : undefined,
         timeSlotId: scheduleMode === 'bucket' ? formData.timeSlotId : undefined
       };
@@ -155,9 +165,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
 
   const filteredTags = useMemo(() => {
     return tags.filter(tag => {
-      // Always show tags that are already selected for this task
-      if (formData.tags.includes(tag.id)) return true;
-      
       if (formData.category) {
         // If category is selected, show tags bound to this category
         return tag.categoryId === formData.category;
@@ -166,7 +173,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
         return !tag.categoryId;
       }
     });
-  }, [tags, formData.category, formData.tags]);
+  }, [tags, formData.category]);
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto border border-gray-100">

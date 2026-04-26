@@ -48,9 +48,9 @@ function App() {
   const [tags, setTags] = useState<Tag[]>(() => {
     const saved = localStorage.getItem('task_tags');
     return saved ? JSON.parse(saved) : [
-      { id: '1', name: 'Tonight', color: '#ef4444' },
-      { id: '2', name: 'Weekly', color: '#3b82f6' },
-      { id: '3', name: 'React', color: '#06b6d4' },
+      { id: '1', name: 'Tonight', color: '#ef4444' }, // Global
+      { id: '2', name: 'Weekly', color: '#3b82f6', categoryId: '1' }, // Bound to Work
+      { id: '3', name: 'React', color: '#06b6d4', categoryId: '3' }, // Bound to Learning
     ];
   });
 
@@ -160,11 +160,11 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>(() => {
     const saved = localStorage.getItem('task_items');
     return saved ? JSON.parse(saved) : [
-      { id: 1, title: 'Learn Advanced React Patterns', timeSlotId: '4', priority: 'High', status: 'Pending', category: '3', tags: ['1', '3'] },
+      { id: 1, title: 'Learn Advanced React Patterns', timeSlotId: '4', priority: 'High', status: 'Pending', category: '3', tags: ['3'] },
       { id: 2, title: 'Weekly Market Research', timeSlotId: '5', priority: 'Medium', status: 'Pending', category: '1', tags: ['2'] },
-      { id: 3, title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed', category: '1', tags: ['3'] },
+      { id: 3, title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed', category: '1', tags: ['2'] },
       { id: 4, title: 'Quick: JavaScript Deep Dive', timeSlotId: '2', priority: 'High', status: 'Pending', category: '3', tags: ['1'] },
-      { id: 5, title: 'Check new YouTube tutorials', timeSlotId: '1', priority: 'Low', status: 'Pending', category: '3', tags: ['2', '3'] },
+      { id: 5, title: 'Check new YouTube tutorials', timeSlotId: '1', priority: 'Low', status: 'Pending', category: '3', tags: ['1', '3'] },
     ];
   });
 
