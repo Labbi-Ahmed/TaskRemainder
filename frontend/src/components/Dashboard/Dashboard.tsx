@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import StatCard from './StatCard';
 import TaskList from './TaskList';
+import { Task, Category, Tag } from '../../types';
 
 interface DashboardStats {
   totalTasks: number;
   pendingTasks: number;
   completedTasks: number;
   dueTodayTasks: number;
-  recentTasks: any[];
+  recentTasks: Task[];
   nextReminder: {
     title: string;
     time: string;
@@ -17,17 +18,21 @@ interface DashboardStats {
 }
 
 interface DashboardProps {
-  tasks: any[];
+  tasks: Task[];
+  categories: Category[];
+  tags: Tag[];
   isLoading?: boolean;
   onNewTask?: () => void;
   onViewChange?: (view: string) => void;
   onToggleStatus?: (taskId: number) => void;
-  onEdit?: (task: any) => void;
+  onEdit?: (task: Task) => void;
   onDelete?: (taskId: number) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
   tasks, 
+  categories,
+  tags,
   isLoading: propLoading, 
   onNewTask, 
   onViewChange, 
@@ -53,23 +58,20 @@ const Dashboard: React.FC<DashboardProps> = ({
       try {
         await new Promise(resolve => setTimeout(resolve, 1000));
         setStats({
-          totalTasks: 24,
-          pendingTasks: 12,
-          completedTasks: 12,
-          dueTodayTasks: 4,
+          totalTasks: tasks.length,
+          pendingTasks: tasks.filter(t => t.status === 'Pending').length,
+          completedTasks: tasks.filter(t => t.status === 'Completed').length,
+          dueTodayTasks: tasks.filter(t => {
+            const today = new Date('2026-04-22').toISOString().split('T')[0];
+            return t.dueDate.startsWith(today);
+          }).length,
           disciplineScore: 78,
-          nextReminder: {
-            title: 'Weekly Sync Meeting',
-            time: '2026-04-22T10:00:00Z',
-            type: 'Meeting'
-          },
-          recentTasks: [
-            { id: 1, title: 'Finalize project proposal', dueDate: '2026-04-22T17:00:00Z', priority: 'High', status: 'Pending' },
-            { id: 2, title: 'Team standup meeting', dueDate: '2026-04-22T10:00:00Z', priority: 'Medium', status: 'Pending' },
-            { id: 3, title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed' },
-            { id: 4, title: 'Client follow-up call', dueDate: '2026-04-22T14:30:00Z', priority: 'High', status: 'Pending' },
-            { id: 5, title: 'Weekly task review', dueDate: '2026-04-24T16:00:00Z', priority: 'Medium', status: 'Pending' }
-          ]
+          nextReminder: tasks.length > 0 ? {
+            title: tasks[0].title,
+            time: tasks[0].dueDate,
+            type: 'Task'
+          } : null,
+          recentTasks: tasks.slice(0, 5)
         });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -79,7 +81,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
 
     fetchDashboardData();
-  }, [propLoading]);
+  }, [propLoading, tasks]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -216,6 +218,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="lg:col-span-2">
           <TaskList 
             tasks={tasks} 
+            categories={categories}
+            tags={tags}
             isLoading={isLoading} 
             onViewChange={() => onViewChange?.('tasks')}
             onToggleStatus={onToggleStatus}

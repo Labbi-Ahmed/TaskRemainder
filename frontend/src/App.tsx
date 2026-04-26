@@ -6,7 +6,9 @@ import DashboardLayout from './components/Layout/DashboardLayout';
 import TaskForm from './components/Dashboard/TaskForm';
 import TaskList from './components/Dashboard/TaskList';
 import Calendar from './components/Common/Calendar';
+import CategoryTagManager from './components/Dashboard/CategoryTagManager';
 import { authUtils } from './utils/auth';
+import { Category, Tag, Task } from './types';
 import './App.css';
 
 function App() {
@@ -31,6 +33,61 @@ function App() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showTodayOnly, setShowTodayOnly] = useState(false);
+
+  // Categories and Tags State with localStorage persistence
+  const [categories, setCategories] = useState<Category[]>(() => {
+    const saved = localStorage.getItem('task_categories');
+    return saved ? JSON.parse(saved) : [
+      { id: '1', name: 'Work', color: '#6366f1' },
+      { id: '2', name: 'Personal', color: '#10b981' },
+      { id: '3', name: 'Learning', color: '#f59e0b' },
+    ];
+  });
+
+  const [tags, setTags] = useState<Tag[]>(() => {
+    const saved = localStorage.getItem('task_tags');
+    return saved ? JSON.parse(saved) : [
+      { id: '1', name: 'Tonight', color: '#ef4444' },
+      { id: '2', name: 'Weekly', color: '#3b82f6' },
+      { id: '3', name: 'React', color: '#06b6d4' },
+    ];
+  });
+
+  // Save to localStorage when categories or tags change
+  useEffect(() => {
+    localStorage.setItem('task_categories', JSON.stringify(categories));
+  }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem('task_tags', JSON.stringify(tags));
+  }, [tags]);
+
+
+  const handleAddCategory = (category: Omit<Category, 'id'>) => {
+    const newCategory = { ...category, id: Math.random().toString(36).substr(2, 9) };
+    setCategories(prev => [...prev, newCategory]);
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
+  };
+
+  const handleUpdateCategory = (id: string, updatedCategory: Omit<Category, 'id'>) => {
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updatedCategory } : c));
+  };
+
+  const handleAddTag = (tag: Omit<Tag, 'id'>) => {
+    const newTag = { ...tag, id: Math.random().toString(36).substr(2, 9) };
+    setTags(prev => [...prev, newTag]);
+  };
+
+  const handleDeleteTag = (id: string) => {
+    setTags(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleUpdateTag = (id: string, updatedTag: Omit<Tag, 'id'>) => {
+    setTags(prev => prev.map(t => t.id === id ? { ...t, ...updatedTag } : t));
+  };
 
   // Persistence and loading simulation for activeView
   useEffect(() => {
@@ -68,16 +125,22 @@ function App() {
     setCurrentPage('dashboard');
   };
 
-  // Mock tasks
-  const [tasks, setTasks] = useState([
-    { id: 1, title: 'Finalize project proposal', dueDate: '2026-04-22T17:00:00Z', priority: 'High', status: 'Pending' },
-    { id: 2, title: 'Team standup meeting', dueDate: '2026-04-22T10:00:00Z', priority: 'Medium', status: 'Pending' },
-    { id: 3, title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed' },
-    { id: 4, title: 'Client follow-up call', dueDate: '2026-04-22T14:30:00Z', priority: 'High', status: 'Pending' },
-    { id: 5, title: 'Weekly task review', dueDate: '2026-04-24T16:00:00Z', priority: 'Medium', status: 'Pending' },
-    { id: 6, title: 'Check new YouTube tutorials', dueDate: '2026-04-25T11:00:00Z', priority: 'Low', status: 'Pending' },
-    { id: 7, title: 'Grocery shopping', dueDate: '2026-04-22T19:00:00Z', priority: 'Medium', status: 'Pending' },
-  ]);
+  // Mock tasks with localStorage persistence
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const saved = localStorage.getItem('task_items');
+    return saved ? JSON.parse(saved) : [
+      { id: 1, title: 'Learn Advanced React Patterns', dueDate: '2026-04-26T21:00:00Z', priority: 'High', status: 'Pending', category: '3', tags: ['1', '3'] },
+      { id: 2, title: 'Weekly Market Research', dueDate: '2026-04-28T10:00:00Z', priority: 'Medium', status: 'Pending', category: '1', tags: ['2'] },
+      { id: 3, title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed', category: '1', tags: ['3'] },
+      { id: 4, title: 'Quick: JavaScript Deep Dive', dueDate: '2026-04-26T20:30:00Z', priority: 'High', status: 'Pending', category: '3', tags: ['1'] },
+      { id: 5, title: 'Check new YouTube tutorials', dueDate: '2026-04-25T11:00:00Z', priority: 'Low', status: 'Pending', category: '3', tags: ['2', '3'] },
+    ];
+  });
+
+  // Save tasks to localStorage
+  useEffect(() => {
+    localStorage.setItem('task_items', JSON.stringify(tasks));
+  }, [tasks]);
 
   const handleToggleTaskStatus = (taskId: number) => {
     setTasks(prevTasks => 
@@ -131,6 +194,8 @@ function App() {
         return (
           <Dashboard 
             tasks={tasks}
+            categories={categories}
+            tags={tags}
             isLoading={isLoading}
             onNewTask={() => {
               setEditingTask(null);
@@ -258,6 +323,8 @@ function App() {
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <TaskList 
                 tasks={filteredTasks} 
+                categories={categories}
+                tags={tags}
                 isLoading={isLoading} 
                 title="Active Tasks" 
                 showViewAll={false} 
@@ -268,9 +335,21 @@ function App() {
             </div>
           </div>
         );
+      case 'categories':
+        return (
+          <CategoryTagManager 
+            categories={categories}
+            tags={tags}
+            onAddCategory={handleAddCategory}
+            onDeleteCategory={handleDeleteCategory}
+            onUpdateCategory={handleUpdateCategory}
+            onAddTag={handleAddTag}
+            onDeleteTag={handleDeleteTag}
+            onUpdateTag={handleUpdateTag}
+          />
+        );
       case 'library':
       case 'schedule':
-      case 'categories':
       case 'analytics':
       case 'settings':
         return (
@@ -315,6 +394,8 @@ function App() {
                   <div className="relative w-full max-w-2xl transform transition-all animate-in fade-in zoom-in duration-200">
                     <TaskForm 
                       initialData={editingTask}
+                      categories={categories}
+                      tags={tags}
                       onCancel={() => {
                         setIsTaskModalOpen(false);
                         setEditingTask(null);
@@ -323,7 +404,7 @@ function App() {
                         if (editingTask) {
                           setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...data } : t));
                         } else {
-                          const newTask = {
+                          const newTask: Task = {
                             ...data,
                             id: tasks.length + 1,
                             status: 'Pending'

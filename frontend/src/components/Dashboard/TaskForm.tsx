@@ -3,14 +3,17 @@ import Input from '../Common/Input';
 import Select from '../Common/Select';
 import Textarea from '../Common/Textarea';
 import Button from '../Common/Button';
+import { Category, Tag } from '../../types';
 
 interface TaskFormProps {
   onCancel: () => void;
   onSubmit: (taskData: any) => void;
   initialData?: any;
+  categories: Category[];
+  tags: Tag[];
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData }) => {
+const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, categories, tags }) => {
   // Format initial date for datetime-local input (YYYY-MM-DDTHH:mm)
   const formatInitialDate = (dateString?: string) => {
     if (!dateString) return '';
@@ -34,7 +37,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData }) 
     dueDate: formatInitialDate(initialData?.dueDate),
     priority: initialData?.priority || 'Medium',
     category: initialData?.category || '',
-    tags: initialData?.tags || '',
+    tags: (initialData?.tags || []) as string[],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -51,6 +54,19 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData }) 
         return newErrors;
       });
     }
+  };
+
+  const handleTagToggle = (tagId: string) => {
+    setFormData(prev => {
+      const currentTags = [...prev.tags];
+      const index = currentTags.indexOf(tagId);
+      if (index > -1) {
+        currentTags.splice(index, 1);
+      } else {
+        currentTags.push(tagId);
+      }
+      return { ...prev, tags: currentTags };
+    });
   };
 
   const validate = () => {
@@ -184,24 +200,44 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData }) 
 
           <div>
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Category</label>
-            <Input
+            <Select
               label="Category"
               name="category"
               value={formData.category}
               onChange={handleChange}
-              placeholder="e.g., Learning, Work, Personal"
+              options={categories.map(c => ({ value: c.id, label: c.name }))}
             />
           </div>
 
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Tags</label>
-            <Input
-              label="Tags"
-              name="tags"
-              value={formData.tags}
-              onChange={handleChange}
-              placeholder="Comma separated: video, react, urgent"
-            />
+            <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-md bg-gray-50/30">
+              {tags.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">No tags available. Create some in Categories & Tags.</p>
+              ) : (
+                tags.map((tag) => {
+                  const isSelected = formData.tags.includes(tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => handleTagToggle(tag.id)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 ${
+                        isSelected 
+                          ? 'text-white shadow-sm' 
+                          : 'bg-white text-gray-400 border border-gray-200 hover:border-gray-300'
+                      }`}
+                      style={{ 
+                        backgroundColor: isSelected ? tag.color : undefined,
+                        borderColor: isSelected ? tag.color : undefined
+                      }}
+                    >
+                      {tag.name}
+                    </button>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
 
