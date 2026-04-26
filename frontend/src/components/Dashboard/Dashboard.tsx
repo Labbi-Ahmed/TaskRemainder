@@ -49,7 +49,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     dueTodayTasks: 0,
     recentTasks: [],
     nextReminder: null,
-    disciplineScore: 85
+    disciplineScore: 0
   });
   const [internalLoading, setInternalLoading] = useState(true);
   const isLoading = propLoading !== undefined ? propLoading : internalLoading;
@@ -103,12 +103,25 @@ const Dashboard: React.FC<DashboardProps> = ({
             }
         }
 
+        const completedCount = tasks.filter(t => t.status === 'Completed').length;
+        const pendingCount = pending.length;
+        const totalCount = tasks.length;
+
+        // Life Discipline Score Logic:
+        // Completed: 100% value
+        // Pending: 50% value (Commitment made, not yet fulfilled)
+        // Missed: 0% value
+        let calculatedScore = 100;
+        if (totalCount > 0) {
+          calculatedScore = Math.round(((completedCount * 1) + (pendingCount * 0.5)) / totalCount * 100);
+        }
+
         setStats({
-          totalTasks: tasks.length,
-          pendingTasks: pending.length,
-          completedTasks: tasks.filter(t => t.status === 'Completed').length,
+          totalTasks: totalCount,
+          pendingTasks: pendingCount,
+          completedTasks: completedCount,
           dueTodayTasks: dueToday.length,
-          disciplineScore: 78,
+          disciplineScore: calculatedScore,
           nextReminder: nextRem,
           recentTasks: tasks.slice(0, 5)
         });
@@ -121,6 +134,16 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     fetchDashboardData();
   }, [propLoading, tasks, timeSlots]);
+
+  const getDisciplineStatus = (score: number) => {
+    if (score >= 90) return { label: 'Elite', color: 'text-indigo-600' };
+    if (score >= 75) return { label: 'Excellent', color: 'text-green-600' };
+    if (score >= 50) return { label: 'Good', color: 'text-yellow-600' };
+    if (score >= 30) return { label: 'Fair', color: 'text-orange-600' };
+    return { label: 'Poor', color: 'text-red-600' };
+  };
+
+  const disciplineStatus = getDisciplineStatus(stats.disciplineScore);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -230,11 +253,17 @@ const Dashboard: React.FC<DashboardProps> = ({
             </svg>
             <div className="absolute text-center">
               <span className="text-4xl font-extrabold text-gray-800">{stats.disciplineScore}%</span>
-              <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mt-1">Excellent</p>
+              <p className={`text-xs uppercase font-bold tracking-widest mt-1 ${disciplineStatus.color}`}>
+                {disciplineStatus.label}
+              </p>
             </div>
           </div>
           <p className="mt-8 text-sm text-center text-gray-600 px-4">
-            You've completed <span className="font-bold text-green-600">12 tasks</span> on time this week. Your discipline is improving!
+            {stats.completedTasks > 0 ? (
+                <>You've completed <span className="font-bold text-green-600">{stats.completedTasks} tasks</span>. {stats.disciplineScore > 70 ? "Your discipline is impressive!" : "Keep pushing to improve your score!"}</>
+            ) : (
+                <>No tasks completed yet. Start your journey today!</>
+            )}
           </p>
         </div>
 
