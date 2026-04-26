@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
+import { authUtils } from '../../utils/auth';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView,
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const user = authUtils.getUser();
+  const userName = user?.name || 'User';
+  const userEmail = user?.email || '';
+  const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'U';
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -53,10 +59,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView,
               className="flex items-center space-x-3 focus:outline-none p-1 rounded-full hover:bg-gray-50 transition duration-150"
             >
               <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm border-2 border-white">
-                LA
+                {initials}
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-bold text-gray-700 leading-none">Labbi Ahmed</p>
+                <p className="text-sm font-bold text-gray-700 leading-none">{userName}</p>
               </div>
               <svg 
                 className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} 
@@ -70,9 +76,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView,
 
             {isProfileOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100 transform origin-top-right transition-all duration-200">
-                <div className="px-4 py-3 border-b border-gray-50 md:hidden">
-                  <p className="text-sm font-bold text-gray-700">Labbi Ahmed</p>
-                  <p className="text-xs text-gray-500">labbi@example.com</p>
+                <div className="px-4 py-3 border-b border-gray-50">
+                  <p className="text-sm font-bold text-gray-700">{userName}</p>
+                  <p className="text-xs text-gray-500 truncate">{userEmail}</p>
                 </div>
                 
                 <div className="py-1">
@@ -119,7 +125,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView,
         </header>
 
         {/* Dynamic Content */}
-        <main className="flex-grow overflow-y-auto bg-gray-50">
+        <main className="flex-grow overflow-y-scroll bg-gray-50">
           {children}
         </main>
       </div>

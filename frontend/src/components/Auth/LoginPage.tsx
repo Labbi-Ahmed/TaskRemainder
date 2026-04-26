@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import AuthLayout from './AuthLayout';
 import Input from '../Common/Input';
 import Button from '../Common/Button';
+import { authUtils } from '../../utils/auth';
 
 interface LoginPageProps {
   onToggle: () => void;
@@ -30,7 +31,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggle, onLogin }) => {
 
     try {
       console.log('Attempting login with:', { email, password });
+      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Mock successful login
+      authUtils.setToken('mock-jwt-token');
+      authUtils.setUser({
+        id: 1,
+        email: email.includes('@') ? email : `${email}@example.com`,
+        name: email.split('@')[0]
+      });
+
       setSuccess('Login successful! Redirecting...');
       setTimeout(() => {
         if (onLogin) onLogin();

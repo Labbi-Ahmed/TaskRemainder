@@ -18,13 +18,23 @@ interface DashboardStats {
 
 interface DashboardProps {
   tasks: any[];
+  isLoading?: boolean;
   onNewTask?: () => void;
   onViewChange?: (view: string) => void;
   onToggleStatus?: (taskId: number) => void;
   onEdit?: (task: any) => void;
+  onDelete?: (taskId: number) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ tasks, onNewTask, onViewChange, onToggleStatus, onEdit }) => {
+const Dashboard: React.FC<DashboardProps> = ({ 
+  tasks, 
+  isLoading: propLoading, 
+  onNewTask, 
+  onViewChange, 
+  onToggleStatus, 
+  onEdit, 
+  onDelete 
+}) => {
   const [stats, setStats] = useState<DashboardStats>({
     totalTasks: 0,
     pendingTasks: 0,
@@ -34,11 +44,12 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, onNewTask, onViewChange, o
     nextReminder: null,
     disciplineScore: 85
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [internalLoading, setInternalLoading] = useState(true);
+  const isLoading = propLoading !== undefined ? propLoading : internalLoading;
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      setIsLoading(true);
+      if (propLoading === undefined) setInternalLoading(true);
       try {
         await new Promise(resolve => setTimeout(resolve, 1000));
         setStats({
@@ -63,12 +74,12 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, onNewTask, onViewChange, o
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
-        setIsLoading(false);
+        if (propLoading === undefined) setInternalLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, []);
+  }, [propLoading]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -209,6 +220,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, onNewTask, onViewChange, o
             onViewChange={() => onViewChange?.('tasks')}
             onToggleStatus={onToggleStatus}
             onEdit={onEdit}
+            onDelete={onDelete}
           />
         </div>
       </div>
