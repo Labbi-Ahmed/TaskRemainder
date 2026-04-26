@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import { TaskSkeleton } from '../Common/Skeleton';
-import { Task, Category, Tag } from '../../types';
+import { Task, Category, Tag, TimeSlot } from '../../types';
 
 interface TaskListProps {
   tasks: Task[];
   isLoading: boolean;
   categories: Category[];
   tags: Tag[];
+  timeSlots: TimeSlot[];
   title?: string;
   showViewAll?: boolean;
   onViewChange?: () => void;
@@ -21,6 +22,7 @@ const TaskList: React.FC<TaskListProps> = ({
   isLoading, 
   categories,
   tags,
+  timeSlots,
   title = 'Urgent Tasks', 
   showViewAll = true, 
   onViewChange,
@@ -47,7 +49,6 @@ const TaskList: React.FC<TaskListProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Check if click is on any of the toggle buttons
       const isButtonClick = Object.values(buttonRefs.current).some(
         btn => btn && btn.contains(event.target as Node)
       );
@@ -71,7 +72,6 @@ const TaskList: React.FC<TaskListProps> = ({
       if (button) {
         const rect = button.getBoundingClientRect();
         const spaceBelow = window.innerHeight - rect.bottom;
-        // If less than 200px space below, open upwards
         setMenuDirection(spaceBelow < 200 ? 'up' : 'down');
       }
       setActiveMenu(taskId);
@@ -110,6 +110,23 @@ const TaskList: React.FC<TaskListProps> = ({
     return tags.find(t => t.id === id);
   };
 
+  const formatSchedule = (task: Task) => {
+    if (task.timeSlotId) {
+      const slot = timeSlots.find(s => s.id === task.timeSlotId);
+      return slot ? `Next Reminder: ${slot.name}` : 'Schedule: Bucket';
+    }
+    if (task.dueDate) {
+      return `Due: ${new Date(task.dueDate).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
+    }
+    return 'No active reminder';
+  };
+
+  const formatTime = (hour: number, minute: number) => {
+    const h = hour % 12 || 12;
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    return `${h}:${minute.toString().padStart(2, '0')} ${ampm}`;
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-md flex flex-col w-full relative">
       <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center relative z-20 bg-white rounded-t-xl">
@@ -129,60 +146,70 @@ const TaskList: React.FC<TaskListProps> = ({
             <TaskSkeleton />
             <TaskSkeleton />
             <TaskSkeleton />
-            <TaskSkeleton />
-            <TaskSkeleton />
           </>
         ) : displayTasks.length > 0 ? (
           displayTasks.map((task) => {
             const category = getCategory(task.category);
             return (
-              <div key={task.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition duration-150">
+              <div key={task.id} className="px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition duration-150 border-l-4 border-transparent hover:border-indigo-500">
                 <div className="flex items-center overflow-hidden min-w-0">
-                  <div className={`flex-shrink-0 w-2 h-2 rounded-full mr-4 ${
-                    task.priority === 'High' ? 'bg-red-500' : 
+                  <div className={`flex-shrink-0 w-2.5 h-2.5 rounded-full mr-4 ${
+                    task.priority === 'High' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
                     task.priority === 'Medium' ? 'bg-yellow-500' : 'bg-green-500'
                   }`} />
                   <div className="truncate">
                     <div className="flex items-center space-x-2">
-                      <h4 className={`text-sm font-semibold truncate ${task.status === 'Completed' ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                      <h4 className={`text-sm font-bold truncate ${task.status === 'Completed' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                         {task.title}
                       </h4>
                       {category && (
                         <span 
-                          className="text-[10px] px-1.5 py-0.5 rounded text-white font-bold uppercase"
+                          className="text-[9px] px-1.5 py-0.5 rounded text-white font-black uppercase tracking-wider"
                           style={{ backgroundColor: category.color }}
                         >
                           {category.name}
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center mt-1 gap-2">
-                      <p className="text-xs text-gray-500">
-                        Due: {new Date(task.dueDate).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                      </p>
-                      {task.tags?.map(tagId => {
-                        const tag = getTag(tagId);
-                        if (!tag) return null;
-                        return (
-                          <span 
-                            key={tagId}
-                            className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
-                            style={{ 
-                              backgroundColor: `${tag.color}15`, 
-                              color: tag.color,
-                              border: `1px solid ${tag.color}30`
-                            }}
-                          >
-                            #{tag.name}
-                          </span>
-                        );
-                      })}
+                    <div className="flex flex-col mt-1.5 space-y-2">
+                      <div className="flex items-center text-[11px] text-gray-500 font-medium bg-gray-100/50 self-start px-2 py-0.5 rounded">
+                        <svg className="w-3 h-3 mr-1.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {formatSchedule(task)}
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-2">
+                        {task.tags?.map(tagId => {
+                          const tag = getTag(tagId);
+                          if (!tag) return null;
+                          const slot = tag.timeSlotId ? timeSlots.find(s => s.id === tag.timeSlotId) : null;
+                          return (
+                            <div 
+                              key={tagId}
+                              className="flex items-center px-2 py-0.5 rounded-lg border transition-all space-x-1.5"
+                              style={{ 
+                                backgroundColor: `${tag.color}08`, 
+                                color: tag.color,
+                                borderColor: `${tag.color}30`
+                              }}
+                            >
+                              <span className="text-[10px] font-bold leading-none">#{tag.name}</span>
+                              {slot && (
+                                <span className="text-[8px] opacity-70 font-medium border-l pl-1.5 border-current/20">
+                                  {formatTime(slot.hour, slot.minute)}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3 ml-4 flex-shrink-0">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
-                    task.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                  <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest ${
+                    task.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-indigo-50 text-indigo-600'
                   }`}>
                     {task.status}
                   </span>
@@ -253,16 +280,6 @@ const TaskList: React.FC<TaskListProps> = ({
             <p>No tasks found matching your filters.</p>
           </div>
         )}
-      </div>
-      <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center rounded-b-xl relative z-20">
-         <div className="flex -space-x-2 mr-4">
-            {[1,2,3].map(i => (
-              <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gray-200 overflow-hidden">
-                <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
-              </div>
-            ))}
-         </div>
-         <p className="text-xs text-gray-500">Shared tasks with 3 teammates</p>
       </div>
 
       <ConfirmationModal

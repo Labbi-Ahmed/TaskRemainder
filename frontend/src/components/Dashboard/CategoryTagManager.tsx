@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { Category, Tag } from '../../types';
+import { Category, Tag, TimeSlot } from '../../types';
 import Button from '../Common/Button';
 import Input from '../Common/Input';
+import SearchableSelect from '../Common/SearchableSelect';
 import ConfirmationModal from '../Common/ConfirmationModal';
 
 interface CategoryTagManagerProps {
   categories: Category[];
   tags: Tag[];
+  timeSlots: TimeSlot[];
   onAddCategory: (category: Omit<Category, 'id'>) => void;
   onDeleteCategory: (id: string) => void;
   onUpdateCategory: (id: string, category: Omit<Category, 'id'>) => void;
@@ -18,6 +20,7 @@ interface CategoryTagManagerProps {
 const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
   categories,
   tags,
+  timeSlots,
   onAddCategory,
   onDeleteCategory,
   onUpdateCategory,
@@ -29,6 +32,10 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
   const [newCategoryColor, setNewCategoryColor] = useState('#6366f1'); // Default indigo
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#10b981'); // Default emerald
+  const [newTagTimeSlotId, setNewTagTimeSlotId] = useState('none');
+  
+  // Filtering state
+  const [filterSlotId, setFilterSlotId] = useState('none');
 
   // Editing state for categories (inline)
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -39,6 +46,7 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [editTagName, setEditTagName] = useState('');
   const [editTagColor, setEditTagColor] = useState('');
+  const [editTagTimeSlotId, setEditTagTimeSlotId] = useState('none');
 
   // Confirmation Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -61,10 +69,14 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
   }, [categories, newCategoryName]);
 
   const filteredTags = useMemo(() => {
-    return tags.filter(t => 
-      t.name.toLowerCase().includes(newTagName.toLowerCase())
-    );
-  }, [tags, newTagName]);
+    return tags.filter(t => {
+      const matchesSearch = t.name.toLowerCase().includes(newTagName.toLowerCase());
+      // Logic: if filter is 'none' (No Automatic Schedule selected), show all tags.
+      // Otherwise, filter by the selected slot ID.
+      if (filterSlotId === 'none') return matchesSearch;
+      return matchesSearch && t.timeSlotId === filterSlotId;
+    });
+  }, [tags, newTagName, filterSlotId]);
 
   // Check for exact duplicates
   const categoryExists = categories.some(
@@ -102,8 +114,13 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
   const handleAddTag = (e: React.FormEvent) => {
     e.preventDefault();
     if (newTagName.trim() && !tagExists) {
-      onAddTag({ name: newTagName.trim(), color: newTagColor });
+      onAddTag({ 
+        name: newTagName.trim(), 
+        color: newTagColor,
+        timeSlotId: newTagTimeSlotId === 'none' ? undefined : newTagTimeSlotId
+      });
       setNewTagName('');
+      setNewTagTimeSlotId('none');
     }
   };
 
@@ -111,13 +128,15 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
     setEditingTag(tag);
     setEditTagName(tag.name);
     setEditTagColor(tag.color);
+    setEditTagTimeSlotId(tag.timeSlotId || 'none');
   };
 
   const handleSaveEditTag = () => {
     if (editingTag && editTagName.trim()) {
       onUpdateTag(editingTag.id, {
         name: editTagName.trim(),
-        color: editTagColor
+        color: editTagColor,
+        timeSlotId: editTagTimeSlotId === 'none' ? undefined : editTagTimeSlotId
       });
       setEditingTag(null);
     }
@@ -142,6 +161,14 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
     }
     setConfirmModal(prev => ({ ...prev, isOpen: false }));
   };
+
+  const timeSlotOptions = useMemo(() => [
+    { value: 'none', label: 'No Automatic Schedule' },
+    ...timeSlots.map(slot => ({
+      value: slot.id,
+      label: `${slot.name} (${slot.hour}:${slot.minute.toString().padStart(2, '0')})`
+    }))
+  ], [timeSlots]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -299,71 +326,102 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
           </div>
           
           <div className="p-6 flex flex-col flex-grow overflow-hidden">
-            <form onSubmit={handleAddTag} className="mb-6">
-              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                <div className="flex-grow">
-                  <Input
-                    label="Search or Add Tag"
-                    placeholder="Type to search or add..."
-                    value={newTagName}
-                    onChange={(e) => setNewTagName(e.target.value)}
-                    className="w-full"
-                  />
+            <div className="space-y-4 mb-6">
+              <form onSubmit={handleAddTag} className="space-y-4">
+                <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                  <div className="flex-grow">
+                    <Input
+                      label="Search or Add Tag"
+                      placeholder="Type to search or add..."
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="color"
+                      value={newTagColor}
+                      onChange={(e) => setNewTagColor(e.target.value)}
+                      className="h-10 w-10 rounded border border-gray-300 cursor-pointer"
+                      title="Choose tag color"
+                    />
+                    <Button 
+                      type="submit" 
+                      className="whitespace-nowrap"
+                      disabled={tagExists || !newTagName.trim()}
+                    >
+                      Add New
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="color"
-                    value={newTagColor}
-                    onChange={(e) => setNewTagColor(e.target.value)}
-                    className="h-10 w-10 rounded border border-gray-300 cursor-pointer"
-                    title="Choose tag color"
+                
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Assigned Time Slot (Filter & Add)</label>
+                  <SearchableSelect
+                    label="Time Slot"
+                    options={timeSlotOptions}
+                    value={filterSlotId}
+                    onChange={(val) => {
+                        setFilterSlotId(val);
+                        setNewTagTimeSlotId(val);
+                    }}
+                    placeholder="No time selected..."
                   />
-                  <Button 
-                    type="submit" 
-                    className="whitespace-nowrap"
-                    disabled={tagExists || !newTagName.trim()}
-                  >
-                    Add New
-                  </Button>
+                  <p className="text-[9px] text-gray-400 mt-1.5 italic ml-1">
+                    {filterSlotId === 'none' 
+                        ? "Currently showing all tags. Select a slot to filter." 
+                        : `Showing tags for routine. New tags will be auto-assigned to this slot.`}
+                  </p>
                 </div>
-              </div>
-              {tagExists && (
-                <p className="text-[10px] text-red-500 mt-1 ml-1 font-medium italic">
-                  This tag already exists.
-                </p>
-              )}
-            </form>
 
-            <div className="flex flex-wrap gap-2 flex-grow overflow-y-auto pr-2 custom-scrollbar content-start">
+                {tagExists && (
+                  <p className="text-[10px] text-red-500 mt-1 ml-1 font-medium italic">
+                    This tag already exists.
+                  </p>
+                )}
+              </form>
+            </div>
+
+            <div className="flex flex-wrap gap-2 flex-grow overflow-y-auto pr-2 custom-scrollbar content-start border-t border-gray-50 pt-4">
               {filteredTags.length === 0 ? (
-                <p className="w-full text-center py-4 text-gray-400 italic">
-                  {newTagName ? 'No matching tags found.' : 'No tags yet.'}
+                <p className="w-full text-center py-8 text-gray-400 italic">
+                  {newTagName || filterSlotId !== 'none' ? 'No matching tags found.' : 'No tags yet.'}
                 </p>
               ) : (
                 filteredTags.map((tag) => (
                   <div 
                     key={tag.id} 
-                    className="group relative flex items-center space-x-1 px-3 py-1.5 rounded-full text-sm font-medium border transition-all cursor-pointer hover:shadow-sm"
+                    className="group relative flex flex-col space-y-1 px-3 py-2 rounded-xl text-sm font-medium border transition-all cursor-pointer hover:shadow-md min-w-[120px]"
                     style={{ 
-                      backgroundColor: `${tag.color}10`, 
-                      borderColor: `${tag.color}40`,
-                      color: tag.color 
+                      backgroundColor: `${tag.color}05`, 
+                      borderColor: `${tag.color}30`,
                     }}
                     onClick={() => handleStartEditTag(tag)}
                   >
-                    <span>{tag.name}</span>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openDeleteConfirm('tag', tag);
-                      }}
-                      className="ml-1 opacity-0 group-hover:opacity-100 hover:text-red-600 transition-all"
-                      title="Delete tag"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l18 18" />
-                      </svg>
-                    </button>
+                    <div className="flex items-center justify-between">
+                      <span style={{ color: tag.color }}>{tag.name}</span>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openDeleteConfirm('tag', tag);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 hover:text-red-600 transition-all"
+                        title="Delete tag"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l18 18" />
+                        </svg>
+                      </button>
+                    </div>
+                    {tag.timeSlotId && (
+                      <div className="flex items-center text-[10px] text-gray-400">
+                        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {timeSlots.find(s => s.id === tag.timeSlotId)?.name}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -393,7 +451,7 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tag Name</label>
                   <Input
@@ -420,6 +478,17 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
                       <span className="text-sm font-mono text-gray-600 lowercase">{editTagColor}</span>
                     </div>
                   </div>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Linked Time Slot</label>
+                  <SearchableSelect
+                    label="Time Slot"
+                    options={timeSlotOptions}
+                    value={editTagTimeSlotId}
+                    onChange={setEditTagTimeSlotId}
+                    placeholder="Select a routine bucket..."
+                  />
                 </div>
               </div>
 

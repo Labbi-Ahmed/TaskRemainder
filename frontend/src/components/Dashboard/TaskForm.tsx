@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Input from '../Common/Input';
 import Select from '../Common/Select';
+import SearchableSelect from '../Common/SearchableSelect';
 import Textarea from '../Common/Textarea';
 import Button from '../Common/Button';
-import { Category, Tag } from '../../types';
+import { Category, Tag, TimeSlot } from '../../types';
 
 interface TaskFormProps {
   onCancel: () => void;
@@ -11,9 +12,10 @@ interface TaskFormProps {
   initialData?: any;
   categories: Category[];
   tags: Tag[];
+  timeSlots: TimeSlot[];
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, categories, tags }) => {
+const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, categories, tags, timeSlots }) => {
   // Format initial date for datetime-local input (YYYY-MM-DDTHH:mm)
   const formatInitialDate = (dateString?: string) => {
     if (!dateString) return '';
@@ -29,12 +31,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+  const [scheduleMode, setScheduleMode] = useState<'custom' | 'bucket'>(
+    initialData?.timeSlotId ? 'bucket' : 'custom'
+  );
+
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     contentLink: initialData?.contentLink || '',
     description: initialData?.description || '',
     notes: initialData?.notes || '',
     dueDate: formatInitialDate(initialData?.dueDate),
+    timeSlotId: initialData?.timeSlotId || '',
     priority: initialData?.priority || 'Medium',
     category: initialData?.category || '',
     tags: (initialData?.tags || []) as string[],
@@ -56,6 +63,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     }
   };
 
+  const handleCategoryChange = (val: string) => {
+    setFormData(prev => ({ ...prev, category: val }));
+    if (errors.category) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.category;
+        return newErrors;
+      });
+    }
+  };
+
   const handleTagToggle = (tagId: string) => {
     setFormData(prev => {
       const currentTags = [...prev.tags];
@@ -72,7 +90,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.title.trim()) newErrors.title = 'Title is required';
-    if (!formData.dueDate) newErrors.dueDate = 'Due date and time are required';
+    
+    if (scheduleMode === 'custom' && !formData.dueDate) {
+      newErrors.dueDate = 'Due date and time are required for custom scheduling';
+    }
+    
+    if (scheduleMode === 'bucket' && !formData.timeSlotId) {
+      newErrors.timeSlotId = 'Please select a predefined time slot';
+    }
     
     if (formData.contentLink && !/^https?:\/\/.+/.test(formData.contentLink)) {
       newErrors.contentLink = 'Please enter a valid URL (starting with http:// or https://)';
@@ -89,12 +114,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     setIsSubmitting(true);
     try {
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 800));
       
-      // Convert dueDate to ISO string for storage/backend consistency
       const taskData = {
         ...formData,
-        dueDate: new Date(formData.dueDate).toISOString()
+        dueDate: scheduleMode === 'custom' ? new Date(formData.dueDate).toISOString() : undefined,
+        timeSlotId: scheduleMode === 'bucket' ? formData.timeSlotId : undefined
       };
       
       onSubmit(taskData);
@@ -104,6 +129,19 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
       setIsSubmitting(false);
     }
   };
+
+  const timeSlotOptions = useMemo(() => [
+    { value: '', label: 'Select a time slot...' },
+    ...timeSlots.map(slot => ({
+      value: slot.id,
+      label: `${slot.name} (${slot.hour}:${slot.minute.toString().padStart(2, '0')})`
+    }))
+  ], [timeSlots]);
+
+  const categoryOptions = useMemo(() => 
+    categories.map(c => ({ value: c.id, label: c.name, color: c.color })),
+    [categories]
+  );
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto border border-gray-100">
@@ -149,38 +187,70 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Description</label>
-            <Input
-              label="Description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Short summary of the content"
-            />
-          </div>
-
-          <div className="md:col-span-2">
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Notes</label>
             <Textarea
               label="Notes"
               name="notes"
-              rows={3}
+              rows={2}
               value={formData.notes}
               onChange={handleChange}
-              placeholder="Why is this important? Any extra context?"
+              placeholder="Extra context or thoughts..."
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Schedule Reminder</label>
-            <Input
-              label="Schedule Reminder"
-              name="dueDate"
-              type="datetime-local"
-              value={formData.dueDate}
-              onChange={handleChange}
-              error={errors.dueDate}
-            />
+          {/* Scheduling UI */}
+          <div className="md:col-span-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Schedule Reminder</label>
+              <div className="flex bg-gray-100 p-1 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setScheduleMode('custom')}
+                  className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                    scheduleMode === 'custom' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Custom Time
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScheduleMode('bucket')}
+                  className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                    scheduleMode === 'bucket' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Predefined
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100 min-h-[100px] flex items-center">
+              {scheduleMode === 'custom' ? (
+                <div className="w-full animate-in fade-in slide-in-from-top-1 duration-200">
+                  <Input
+                    label="Due Date"
+                    name="dueDate"
+                    type="datetime-local"
+                    value={formData.dueDate}
+                    onChange={handleChange}
+                    error={errors.dueDate}
+                  />
+                  <p className="text-[10px] text-gray-400 mt-2 italic ml-1 font-medium">Pick an exact time for this notification.</p>
+                </div>
+              ) : (
+                <div className="w-full animate-in fade-in slide-in-from-bottom-1 duration-200">
+                  <Select
+                    label="Time Slot"
+                    name="timeSlotId"
+                    value={formData.timeSlotId}
+                    onChange={handleChange}
+                    options={timeSlotOptions}
+                    error={errors.timeSlotId}
+                  />
+                  <p className="text-[10px] text-gray-400 mt-2 italic ml-1 font-medium">Assigned to a recurring routine bucket.</p>
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -200,31 +270,33 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
 
           <div>
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Category</label>
-            <Select
+            <SearchableSelect
               label="Category"
-              name="category"
+              options={categoryOptions}
               value={formData.category}
-              onChange={handleChange}
-              options={categories.map(c => ({ value: c.id, label: c.name }))}
+              onChange={handleCategoryChange}
+              error={errors.category}
+              placeholder="Search category..."
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Tags</label>
-            <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-md bg-gray-50/30">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Tags (Informational)</label>
+            <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-md bg-white">
               {tags.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">No tags available. Create some in Categories & Tags.</p>
+                <p className="text-sm text-gray-400 italic">No tags available.</p>
               ) : (
                 tags.map((tag) => {
                   const isSelected = formData.tags.includes(tag.id);
+                  const slot = tag.timeSlotId ? timeSlots.find(s => s.id === tag.timeSlotId) : null;
                   return (
                     <button
                       key={tag.id}
                       type="button"
                       onClick={() => handleTagToggle(tag.id)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 ${
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all duration-200 flex items-center space-x-1.5 ${
                         isSelected 
-                          ? 'text-white shadow-sm' 
+                          ? 'text-white shadow-md' 
                           : 'bg-white text-gray-400 border border-gray-200 hover:border-gray-300'
                       }`}
                       style={{ 
@@ -232,12 +304,25 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
                         borderColor: isSelected ? tag.color : undefined
                       }}
                     >
-                      {tag.name}
+                      <span className="flex items-center">
+                        {slot && (
+                            <svg className="w-2.5 h-2.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        )}
+                        {tag.name}
+                      </span>
+                      {slot && (
+                        <span className={`text-[8px] border-l pl-1.5 font-medium ${isSelected ? 'text-white/80 border-white/20' : 'text-gray-300 border-gray-100'}`}>
+                           {slot.hour}:{slot.minute.toString().padStart(2, '0')}
+                        </span>
+                      )}
                     </button>
                   );
                 })
               )}
             </div>
+            <p className="text-[9px] text-gray-400 mt-2 italic ml-1">* Tags show their routine times, but do not override the main schedule selected above.</p>
           </div>
         </div>
 

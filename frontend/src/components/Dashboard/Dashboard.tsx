@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import StatCard from './StatCard';
 import TaskList from './TaskList';
-import { Task, Category, Tag } from '../../types';
+import { Task, Category, Tag, TimeSlot } from '../../types';
 
 interface DashboardStats {
   totalTasks: number;
@@ -11,7 +11,7 @@ interface DashboardStats {
   recentTasks: Task[];
   nextReminder: {
     title: string;
-    time: string;
+    timeLabel: string;
     type: string;
   } | null;
   disciplineScore: number;
@@ -21,6 +21,7 @@ interface DashboardProps {
   tasks: Task[];
   categories: Category[];
   tags: Tag[];
+  timeSlots: TimeSlot[];
   isLoading?: boolean;
   onNewTask?: () => void;
   onViewChange?: (view: string) => void;
@@ -33,6 +34,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   tasks, 
   categories,
   tags,
+  timeSlots,
   isLoading: propLoading, 
   onNewTask, 
   onViewChange, 
@@ -56,21 +58,58 @@ const Dashboard: React.FC<DashboardProps> = ({
     const fetchDashboardData = async () => {
       if (propLoading === undefined) setInternalLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        const todayStr = new Date('2026-04-22').toISOString().split('T')[0];
+        const dayOfWeek = new Date('2026-04-22').getDay();
+        const dayOfMonth = new Date('2026-04-22').getDate();
+
+        // Find which buckets are "active" today
+        const activeTodaySlots = timeSlots.filter(slot => {
+            if (slot.type === 'daily') return true;
+            if (slot.type === 'weekly') return slot.daysOfWeek?.includes(dayOfWeek);
+            if (slot.type === 'monthly') return slot.dayOfMonth === dayOfMonth;
+            return false;
+        }).map(s => s.id);
+
+        const dueToday = tasks.filter(t => {
+            if (t.status !== 'Pending') return false;
+            if (t.dueDate && t.dueDate.startsWith(todayStr)) return true;
+            if (t.timeSlotId && activeTodaySlots.includes(t.timeSlotId)) return true;
+            return false;
+        });
+
+        const pending = tasks.filter(t => t.status === 'Pending');
+        
+        // Find next reminder
+        let nextRem = null;
+        if (pending.length > 0) {
+            const firstWithDate = pending.find(t => t.dueDate);
+            const firstWithSlot = pending.find(t => t.timeSlotId);
+            
+            if (firstWithDate) {
+                nextRem = {
+                    title: firstWithDate.title,
+                    timeLabel: new Date(firstWithDate.dueDate!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    type: 'Custom'
+                };
+            } else if (firstWithSlot) {
+                const slot = timeSlots.find(s => s.id === firstWithSlot.timeSlotId);
+                nextRem = {
+                    title: firstWithSlot.title,
+                    timeLabel: slot ? `${slot.hour}:${slot.minute.toString().padStart(2, '0')}` : 'Scheduled',
+                    type: 'Bucket'
+                };
+            }
+        }
+
         setStats({
           totalTasks: tasks.length,
-          pendingTasks: tasks.filter(t => t.status === 'Pending').length,
+          pendingTasks: pending.length,
           completedTasks: tasks.filter(t => t.status === 'Completed').length,
-          dueTodayTasks: tasks.filter(t => {
-            const today = new Date('2026-04-22').toISOString().split('T')[0];
-            return t.dueDate.startsWith(today);
-          }).length,
+          dueTodayTasks: dueToday.length,
           disciplineScore: 78,
-          nextReminder: tasks.length > 0 ? {
-            title: tasks[0].title,
-            time: tasks[0].dueDate,
-            type: 'Task'
-          } : null,
+          nextReminder: nextRem,
           recentTasks: tasks.slice(0, 5)
         });
       } catch (error) {
@@ -81,7 +120,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
 
     fetchDashboardData();
-  }, [propLoading, tasks]);
+  }, [propLoading, tasks, timeSlots]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -146,9 +185,9 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             ) : stats.nextReminder ? (
               <>
-                <p className="text-xl font-bold leading-tight">{stats.nextReminder.title}</p>
+                <p className="text-xl font-bold leading-tight truncate">{stats.nextReminder.title}</p>
                 <p className="mt-2 text-indigo-100 text-sm font-medium">
-                  At {new Date(stats.nextReminder.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  At {stats.nextReminder.timeLabel}
                 </p>
                 <div className="mt-4 inline-block bg-white/20 backdrop-blur-md rounded-full px-3 py-1 text-xs font-semibold">
                   {stats.nextReminder.type}
@@ -197,22 +236,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           <p className="mt-8 text-sm text-center text-gray-600 px-4">
             You've completed <span className="font-bold text-green-600">12 tasks</span> on time this week. Your discipline is improving!
           </p>
-          <div className="mt-6 w-full space-y-3">
-            <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-wider">
-              <span>Task Completion</span>
-              <span>85%</span>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-2">
-              <div className="bg-green-500 h-2 rounded-full w-[85%]" />
-            </div>
-            <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-wider">
-              <span>On-time Rate</span>
-              <span>72%</span>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-2">
-              <div className="bg-blue-500 h-2 rounded-full w-[72%]" />
-            </div>
-          </div>
         </div>
 
         <div className="lg:col-span-2">
@@ -220,6 +243,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             tasks={tasks} 
             categories={categories}
             tags={tags}
+            timeSlots={timeSlots}
             isLoading={isLoading} 
             onViewChange={() => onViewChange?.('tasks')}
             onToggleStatus={onToggleStatus}

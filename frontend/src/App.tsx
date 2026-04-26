@@ -7,8 +7,9 @@ import TaskForm from './components/Dashboard/TaskForm';
 import TaskList from './components/Dashboard/TaskList';
 import Calendar from './components/Common/Calendar';
 import CategoryTagManager from './components/Dashboard/CategoryTagManager';
+import ScheduleMenu from './components/Dashboard/ScheduleMenu';
 import { authUtils } from './utils/auth';
-import { Category, Tag, Task } from './types';
+import { Category, Tag, Task, TimeSlot } from './types';
 import './App.css';
 
 function App() {
@@ -53,7 +54,19 @@ function App() {
     ];
   });
 
-  // Save to localStorage when categories or tags change
+  // Time Slots State
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>(() => {
+    const saved = localStorage.getItem('task_time_slots');
+    return saved ? JSON.parse(saved) : [
+      { id: '1', name: 'Morning Routine', type: 'daily', hour: 7, minute: 30 },
+      { id: '2', name: 'Morning Commute', type: 'daily', hour: 8, minute: 30 },
+      { id: '3', name: 'Lunch Break', type: 'daily', hour: 13, minute: 0 },
+      { id: '4', name: 'Deep Learning', type: 'daily', hour: 20, minute: 0 },
+      { id: '5', name: 'Weekend Learning', type: 'weekly', hour: 10, minute: 0, daysOfWeek: [0, 6] },
+    ];
+  });
+
+  // Save to localStorage when categories, tags or time slots change
   useEffect(() => {
     localStorage.setItem('task_categories', JSON.stringify(categories));
   }, [categories]);
@@ -61,6 +74,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('task_tags', JSON.stringify(tags));
   }, [tags]);
+
+  useEffect(() => {
+    localStorage.setItem('task_time_slots', JSON.stringify(timeSlots));
+  }, [timeSlots]);
 
 
   const handleAddCategory = (category: Omit<Category, 'id'>) => {
@@ -87,6 +104,20 @@ function App() {
 
   const handleUpdateTag = (id: string, updatedTag: Omit<Tag, 'id'>) => {
     setTags(prev => prev.map(t => t.id === id ? { ...t, ...updatedTag } : t));
+  };
+
+  const handleAddSlot = (slot: Omit<TimeSlot, 'id'>) => {
+    const newSlot = { ...slot, id: Math.random().toString(36).substr(2, 9) };
+    setTimeSlots(prev => [...prev, newSlot]);
+  };
+
+  const handleDeleteSlot = (id: string) => {
+    setTimeSlots(prev => prev.filter(s => s.id !== id));
+    setTags(prev => prev.map(t => t.timeSlotId === id ? { ...t, timeSlotId: undefined } : t));
+  };
+
+  const handleUpdateSlot = (id: string, updatedSlot: Omit<TimeSlot, 'id'>) => {
+    setTimeSlots(prev => prev.map(s => s.id === id ? { ...s, ...updatedSlot } : s));
   };
 
   // Persistence and loading simulation for activeView
@@ -129,11 +160,11 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>(() => {
     const saved = localStorage.getItem('task_items');
     return saved ? JSON.parse(saved) : [
-      { id: 1, title: 'Learn Advanced React Patterns', dueDate: '2026-04-26T21:00:00Z', priority: 'High', status: 'Pending', category: '3', tags: ['1', '3'] },
-      { id: 2, title: 'Weekly Market Research', dueDate: '2026-04-28T10:00:00Z', priority: 'Medium', status: 'Pending', category: '1', tags: ['2'] },
+      { id: 1, title: 'Learn Advanced React Patterns', timeSlotId: '4', priority: 'High', status: 'Pending', category: '3', tags: ['1', '3'] },
+      { id: 2, title: 'Weekly Market Research', timeSlotId: '5', priority: 'Medium', status: 'Pending', category: '1', tags: ['2'] },
       { id: 3, title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed', category: '1', tags: ['3'] },
-      { id: 4, title: 'Quick: JavaScript Deep Dive', dueDate: '2026-04-26T20:30:00Z', priority: 'High', status: 'Pending', category: '3', tags: ['1'] },
-      { id: 5, title: 'Check new YouTube tutorials', dueDate: '2026-04-25T11:00:00Z', priority: 'Low', status: 'Pending', category: '3', tags: ['2', '3'] },
+      { id: 4, title: 'Quick: JavaScript Deep Dive', timeSlotId: '2', priority: 'High', status: 'Pending', category: '3', tags: ['1'] },
+      { id: 5, title: 'Check new YouTube tutorials', timeSlotId: '1', priority: 'Low', status: 'Pending', category: '3', tags: ['2', '3'] },
     ];
   });
 
@@ -164,19 +195,25 @@ function App() {
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
-    const todayStr = new Date('2026-04-22').toISOString().split('T')[0];
-    const taskDateStr = new Date(task.dueDate).toISOString().split('T')[0];
-    const taskDate = new Date(taskDateStr).getTime();
-    
-    if (showTodayOnly) {
-      return matchesSearch && taskDateStr === todayStr && task.status === 'Pending';
-    }
     
     let matchesDate = true;
-    if (startDate || endDate) {
-      const start = startDate ? new Date(startDate).getTime() : -Infinity;
-      const end = endDate ? new Date(endDate).getTime() : Infinity;
-      matchesDate = taskDate >= start && taskDate <= end;
+    if (task.dueDate) {
+        const taskDateStr = new Date(task.dueDate).toISOString().split('T')[0];
+        const taskDate = new Date(taskDateStr).getTime();
+        
+        if (showTodayOnly) {
+            const todayStr = new Date('2026-04-22').toISOString().split('T')[0];
+            matchesDate = taskDateStr === todayStr && task.status === 'Pending';
+        } else if (startDate || endDate) {
+            const start = startDate ? new Date(startDate).getTime() : -Infinity;
+            const end = endDate ? new Date(endDate).getTime() : Infinity;
+            matchesDate = taskDate >= start && taskDate <= end;
+        }
+    } else if (showTodayOnly || startDate || endDate) {
+        // For bucket tasks, they don't have a strict due date, so they might not match date filters
+        // Unless we decide they match "Today" if the bucket repeats today.
+        // For now, keep it simple: strict filters only apply to strict dates.
+        matchesDate = false;
     }
     
     return matchesSearch && matchesStatus && matchesDate;
@@ -196,6 +233,7 @@ function App() {
             tasks={tasks}
             categories={categories}
             tags={tags}
+            timeSlots={timeSlots}
             isLoading={isLoading}
             onNewTask={() => {
               setEditingTask(null);
@@ -325,6 +363,7 @@ function App() {
                 tasks={filteredTasks} 
                 categories={categories}
                 tags={tags}
+                timeSlots={timeSlots}
                 isLoading={isLoading} 
                 title="Active Tasks" 
                 showViewAll={false} 
@@ -340,6 +379,7 @@ function App() {
           <CategoryTagManager 
             categories={categories}
             tags={tags}
+            timeSlots={timeSlots}
             onAddCategory={handleAddCategory}
             onDeleteCategory={handleDeleteCategory}
             onUpdateCategory={handleUpdateCategory}
@@ -348,8 +388,16 @@ function App() {
             onUpdateTag={handleUpdateTag}
           />
         );
-      case 'library':
       case 'schedule':
+        return (
+          <ScheduleMenu
+            timeSlots={timeSlots}
+            onAddSlot={handleAddSlot}
+            onDeleteSlot={handleDeleteSlot}
+            onUpdateSlot={handleUpdateSlot}
+          />
+        );
+      case 'library':
       case 'analytics':
       case 'settings':
         return (
@@ -396,6 +444,7 @@ function App() {
                       initialData={editingTask}
                       categories={categories}
                       tags={tags}
+                      timeSlots={timeSlots}
                       onCancel={() => {
                         setIsTaskModalOpen(false);
                         setEditingTask(null);

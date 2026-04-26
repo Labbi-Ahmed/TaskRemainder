@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TimeSlot, TimeSlotType } from '../../types';
 import Button from '../Common/Button';
 import Input from '../Common/Input';
-import Select from '../Common/Select';
+import SearchableSelect from '../Common/SearchableSelect';
 import ConfirmationModal from '../Common/ConfirmationModal';
 
 interface ScheduleMenuProps {
@@ -44,6 +44,12 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
     { value: '4', label: 'Thu' },
     { value: '5', label: 'Fri' },
     { value: '6', label: 'Sat' },
+  ];
+
+  const repeatOptions = [
+    { value: 'daily', label: 'Daily' },
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'monthly', label: 'Monthly' },
   ];
 
   const handleAdd = (e: React.FormEvent) => {
@@ -127,19 +133,19 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
                 onChange={(e) => setName(e.target.value)}
               />
               
-              <Select
-                label="Repeat Type"
-                value={type}
-                onChange={(e) => setType(e.target.value as TimeSlotType)}
-                options={[
-                  { value: 'daily', label: 'Daily' },
-                  { value: 'weekly', label: 'Weekly' },
-                  { value: 'monthly', label: 'Monthly' },
-                ]}
-              />
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Repeat Type</label>
+                <SearchableSelect
+                  label="Repeat Type"
+                  value={type}
+                  onChange={(val) => setType(val as TimeSlotType)}
+                  options={repeatOptions}
+                  placeholder="Select frequency..."
+                />
+              </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Target Time</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Target Time</label>
                 <input
                   type="time"
                   value={time}
@@ -150,7 +156,7 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
 
               {type === 'weekly' && (
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Days of Week</label>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Days of Week</label>
                   <div className="flex flex-wrap gap-2">
                     {daysOptions.map((opt) => (
                       <button
@@ -190,7 +196,7 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
 
         {/* List Section */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+          <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 h-full">
             <div className="p-6 border-b border-gray-50 bg-gray-50/50">
               <h2 className="text-xl font-bold text-gray-800">Your Time Slots</h2>
             </div>
@@ -262,26 +268,26 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
             <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6 transform transition-all animate-in fade-in zoom-in duration-200">
               <h3 className="text-xl font-bold text-gray-900 mb-6 pb-2 border-b">Edit Time Slot</h3>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <Input
                   label="Slot Name"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                 />
                 
-                <Select
-                  label="Repeat Type"
-                  value={editType}
-                  onChange={(e) => setEditType(e.target.value as TimeSlotType)}
-                  options={[
-                    { value: 'daily', label: 'Daily' },
-                    { value: 'weekly', label: 'Weekly' },
-                    { value: 'monthly', label: 'Monthly' },
-                  ]}
-                />
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Repeat Type</label>
+                  <SearchableSelect
+                    label="Repeat Type"
+                    value={editType}
+                    onChange={(val) => setEditType(val as TimeSlotType)}
+                    options={repeatOptions}
+                    placeholder="Select frequency..."
+                  />
+                </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Target Time</label>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Target Time</label>
                   <input
                     type="time"
                     value={editTime}
@@ -292,7 +298,7 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
 
                 {editType === 'weekly' && (
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Days of Week</label>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Days of Week</label>
                     <div className="flex flex-wrap gap-2">
                       {daysOptions.map((opt) => (
                         <button
