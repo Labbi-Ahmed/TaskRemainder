@@ -1,5 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ConfirmationModal from '../Common/ConfirmationModal';
+import SearchableSelect from '../Common/SearchableSelect';
+import TaskDetailModal from './TaskDetailModal';
 import { TaskSkeleton } from '../Common/Skeleton';
 import { Task, Category, Tag, TimeSlot } from '../../types';
 
@@ -32,6 +34,10 @@ const TaskList: React.FC<TaskListProps> = ({
 }) => {
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [menuDirection, setMenuDirection] = useState<'down' | 'up'>('down');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterTag, setFilterTag] = useState<string>('all');
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
+
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     type: 'delete' | 'status';
@@ -78,7 +84,44 @@ const TaskList: React.FC<TaskListProps> = ({
     }
   };
 
-  const displayTasks = title === 'Urgent Tasks' ? tasks.filter(t => t.status === 'Pending') : tasks;
+  // Filter Logic
+  const categoryOptions = useMemo(() => [
+    { value: 'all', label: 'All Categories' },
+    ...categories.map(c => ({ value: c.id, label: c.name, color: c.color }))
+  ], [categories]);
+
+  const availableTags = useMemo(() => {
+    if (filterCategory !== 'all') {
+      return tags.filter(t => t.categoryId === filterCategory);
+    }
+    // If no category selected, show only global tags (tags with no categoryId)
+    return tags.filter(t => !t.categoryId);
+  }, [tags, filterCategory]);
+
+  const tagOptions = useMemo(() => [
+    { value: 'all', label: filterCategory === 'all' ? 'Global Tags' : 'All Tags' },
+    ...availableTags.map(t => ({ value: t.id, label: t.name, color: t.color }))
+  ], [availableTags, filterCategory]);
+
+  // Reset tag filter if category changes and the selected tag is no longer available
+  useEffect(() => {
+    if (filterTag !== 'all' && !availableTags.some(t => t.id === filterTag)) {
+      setFilterTag('all');
+    }
+  }, [filterCategory, availableTags, filterTag]);
+
+  const displayTasks = useMemo(() => {
+    let result = title === 'Urgent Tasks' ? tasks.filter(t => t.status === 'Pending') : tasks;
+    
+    if (filterCategory !== 'all') {
+      result = result.filter(t => t.category === filterCategory);
+    }
+    if (filterTag !== 'all') {
+      result = result.filter(t => t.tags && t.tags.includes(filterTag));
+    }
+    
+    return result;
+  }, [tasks, title, filterCategory, filterTag]);
 
   const handleOpenConfirm = (type: 'delete' | 'status', task: Task) => {
     setConfirmModal({
@@ -129,16 +172,45 @@ const TaskList: React.FC<TaskListProps> = ({
 
   return (
     <div className="bg-white rounded-xl shadow-md flex flex-col w-full relative">
-      <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center relative z-20 bg-white rounded-t-xl">
-        <h3 className="text-lg font-bold text-gray-800">{title}</h3>
-        {showViewAll && (
-          <button 
-            onClick={onViewChange}
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-          >
-            View All
-          </button>
-        )}
+      <div className="px-6 py-4 border-b border-gray-100 flex flex-col xl:flex-row justify-between items-start xl:items-center relative z-20 bg-white rounded-t-xl gap-4">
+        <div className="flex items-center justify-between w-full xl:w-auto">
+          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+          {showViewAll && (
+            <button 
+              onClick={onViewChange}
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 xl:hidden ml-4"
+            >
+              View All
+            </button>
+          )}
+        </div>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
+          <div className="w-full sm:w-48 z-[120]">
+            <SearchableSelect
+              label="Filter Category"
+              options={categoryOptions}
+              value={filterCategory}
+              onChange={setFilterCategory}
+            />
+          </div>
+          <div className="w-full sm:w-48 z-[110]">
+            <SearchableSelect
+              label="Filter Tag"
+              options={tagOptions}
+              value={filterTag}
+              onChange={setFilterTag}
+            />
+          </div>
+          {showViewAll && (
+            <button 
+              onClick={onViewChange}
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 hidden xl:block whitespace-nowrap ml-2"
+            >
+              View All
+            </button>
+          )}
+        </div>
       </div>
       <div className="divide-y divide-gray-100 flex-grow relative">
         {isLoading ? (
@@ -151,7 +223,11 @@ const TaskList: React.FC<TaskListProps> = ({
           displayTasks.map((task) => {
             const category = getCategory(task.category);
             return (
-              <div key={task.id} className="px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition duration-150 border-l-4 border-transparent hover:border-indigo-500">
+              <div 
+                key={task.id} 
+                onClick={() => setViewingTask(task)}
+                className="px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition duration-150 border-l-4 border-transparent hover:border-indigo-500 cursor-pointer group/item"
+              >
                 <div className="flex items-center overflow-hidden min-w-0">
                   <div className={`flex-shrink-0 w-2.5 h-2.5 rounded-full mr-4 ${
                     task.priority === 'High' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
@@ -159,7 +235,7 @@ const TaskList: React.FC<TaskListProps> = ({
                   }`} />
                   <div className="truncate">
                     <div className="flex items-center space-x-2">
-                      <h4 className={`text-sm font-bold truncate ${task.status === 'Completed' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                      <h4 className={`text-sm font-bold truncate group-hover/item:text-indigo-600 transition-colors ${task.status === 'Completed' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                         {task.title}
                       </h4>
                       {category && (
@@ -207,7 +283,7 @@ const TaskList: React.FC<TaskListProps> = ({
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3 ml-4 flex-shrink-0">
+                <div className="flex items-center space-x-3 ml-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
                   <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest ${
                     task.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-indigo-50 text-indigo-600'
                   }`}>
@@ -281,6 +357,17 @@ const TaskList: React.FC<TaskListProps> = ({
           </div>
         )}
       </div>
+
+      <TaskDetailModal
+        task={viewingTask}
+        isOpen={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        categories={categories}
+        tags={tags}
+        timeSlots={timeSlots}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
 
       <ConfirmationModal
         isOpen={confirmModal.isOpen}

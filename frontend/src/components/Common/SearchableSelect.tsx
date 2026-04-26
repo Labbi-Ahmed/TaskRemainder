@@ -11,6 +11,7 @@ interface SearchableSelectProps {
   options: Option[];
   value: string;
   onChange: (value: string) => void;
+  onClear?: () => void;
   error?: string;
   placeholder?: string;
 }
@@ -20,6 +21,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   options,
   value,
   onChange,
+  onClear,
   error,
   placeholder = 'Select an option...'
 }) => {
@@ -54,6 +56,20 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     setSearchQuery('');
   };
 
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onClear) {
+        onClear();
+    } else {
+        // Fallback: If no onClear is provided, try to find an 'all' or empty option
+        const resetVal = options.find(o => o.value === 'all' || o.value === '')?.value || '';
+        onChange(resetVal);
+    }
+    setIsOpen(false);
+  };
+
+  const isSelectedAndClearable = selectedOption && selectedOption.value !== 'all' && selectedOption.value !== '';
+
   return (
     <div className="w-full relative" ref={containerRef}>
       <label className="sr-only">{label}</label>
@@ -62,29 +78,43 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center justify-between w-full px-3 py-2 border rounded-md cursor-pointer transition-all ${
           error ? 'border-red-500' : 'border-gray-300'
-        } bg-white text-sm focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500`}
+        } bg-white text-sm focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 hover:border-indigo-300 shadow-sm`}
       >
-        <div className="flex items-center truncate">
+        <div className="flex items-center truncate flex-grow">
           {selectedOption ? (
             <>
               {selectedOption.color && (
                 <div 
-                  className="w-3 h-3 rounded-full mr-2 flex-shrink-0" 
+                  className="w-3 h-3 rounded-full mr-2 flex-shrink-0 border border-black/5" 
                   style={{ backgroundColor: selectedOption.color }}
                 />
               )}
-              <span className="text-gray-900">{selectedOption.label}</span>
+              <span className="text-gray-900 font-medium truncate">{selectedOption.label}</span>
             </>
           ) : (
             <span className="text-gray-400">{placeholder}</span>
           )}
         </div>
-        <svg 
-          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
-          fill="none" viewBox="0 0 24 24" stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-        </svg>
+        
+        <div className="flex items-center ml-2 space-x-1.5 flex-shrink-0 border-l pl-2 border-gray-100">
+            {isSelectedAndClearable && (
+                <button
+                    onClick={handleClear}
+                    className="p-0.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all transform hover:scale-110"
+                    title="Clear Selection"
+                >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            )}
+            <svg 
+              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-indigo-500' : ''}`} 
+              fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
       </div>
 
       {isOpen && (

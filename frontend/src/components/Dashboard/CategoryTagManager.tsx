@@ -132,7 +132,8 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
         name: editTagName.trim(),
         color: editTagColor,
         timeSlotId: editTagTimeSlotId === 'none' ? undefined : editTagTimeSlotId,
-        categoryId: editTagCategoryId === 'none' ? undefined : editTagCategoryId
+        // Category binding is immutable after creation
+        categoryId: editingTag.categoryId
       });
       setEditingTag(null);
     }
@@ -312,9 +313,18 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
                       </button>
                     </div>
                     {tag.timeSlotId && (
-                      <div className="flex items-center text-[10px] text-gray-400">
-                        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0" /></svg>
-                        {timeSlots.find(s => s.id === tag.timeSlotId)?.name}
+                      <div className="flex items-center text-[10px] text-gray-400 mt-1">
+                        <svg 
+                          className="w-3 h-3 mr-1 flex-shrink-0" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="truncate leading-tight">
+                          {timeSlots.find(s => s.id === tag.timeSlotId)?.name}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -331,16 +341,17 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
           <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm" onClick={() => setEditingTag(null)} />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-4">Edit Tag</h3>
+              <div className="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 className="text-xl font-bold text-gray-900">Edit Tag</h3>
+                <span className="px-2 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold rounded uppercase tracking-wider">
+                  {editingTag.categoryId ? `Bound to: ${categories.find(c => c.id === editingTag.categoryId)?.name}` : 'Global Tag'}
+                </span>
+              </div>
               <div className="space-y-6">
                 <Input label="Tag Name" value={editTagName} onChange={(e) => setEditTagName(e.target.value)} />
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tag Color</label>
                   <input type="color" value={editTagColor} onChange={(e) => setEditTagColor(e.target.value)} className="h-10 w-full rounded border border-gray-300 cursor-pointer" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Bind to Category</label>
-                  <SearchableSelect options={categorySelectOptions} value={editTagCategoryId} onChange={setEditTagCategoryId} label="Category" />
                 </div>
                 <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Routine Slot</label>
