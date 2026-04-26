@@ -48,7 +48,6 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
   const [editTagName, setEditTagName] = useState('');
   const [editTagColor, setEditTagColor] = useState('');
   const [editTagTimeSlotId, setEditTagTimeSlotId] = useState('none');
-  const [editTagCategoryId, setEditTagCategoryId] = useState<string>('none');
 
   // Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{
@@ -123,7 +122,6 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
     setEditTagName(tag.name);
     setEditTagColor(tag.color);
     setEditTagTimeSlotId(tag.timeSlotId || 'none');
-    setEditTagCategoryId(tag.categoryId || 'none');
   };
 
   const handleSaveEditTag = () => {
@@ -159,10 +157,6 @@ const CategoryTagManager: React.FC<CategoryTagManagerProps> = ({
     }))
   ], [timeSlots]);
 
-  const categorySelectOptions = useMemo(() => [
-    { value: 'none', label: 'Global Tag (All Categories)' },
-    ...categories.map(c => ({ value: c.id, label: `Bound to: ${c.name}` }))
-  ], [categories]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
