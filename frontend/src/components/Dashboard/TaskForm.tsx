@@ -74,6 +74,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     }
   };
 
+  const handleTimeSlotChange = (val: string) => {
+    setFormData(prev => ({ ...prev, timeSlotId: val }));
+    if (errors.timeSlotId) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.timeSlotId;
+        return newErrors;
+      });
+    }
+  };
+
   const handleTagToggle = (tagId: string) => {
     setFormData(prev => {
       const currentTags = [...prev.tags];
@@ -95,7 +106,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
       newErrors.dueDate = 'Due date and time are required for custom scheduling';
     }
     
-    if (scheduleMode === 'bucket' && !formData.timeSlotId) {
+    if (scheduleMode === 'bucket' && (!formData.timeSlotId || formData.timeSlotId === '')) {
       newErrors.timeSlotId = 'Please select a predefined time slot';
     }
     
@@ -130,13 +141,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     }
   };
 
-  const timeSlotOptions = useMemo(() => [
-    { value: '', label: 'Select a time slot...' },
-    ...timeSlots.map(slot => ({
+  const timeSlotOptions = useMemo(() => 
+    timeSlots.map(slot => ({
       value: slot.id,
       label: `${slot.name} (${slot.hour}:${slot.minute.toString().padStart(2, '0')})`
-    }))
-  ], [timeSlots]);
+    })),
+  [timeSlots]);
 
   const categoryOptions = useMemo(() => 
     categories.map(c => ({ value: c.id, label: c.name, color: c.color })),
@@ -239,13 +249,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
                 </div>
               ) : (
                 <div className="w-full animate-in fade-in slide-in-from-bottom-1 duration-200">
-                  <Select
+                  <SearchableSelect
                     label="Time Slot"
-                    name="timeSlotId"
-                    value={formData.timeSlotId}
-                    onChange={handleChange}
                     options={timeSlotOptions}
+                    value={formData.timeSlotId}
+                    onChange={handleTimeSlotChange}
                     error={errors.timeSlotId}
+                    placeholder="Search time slot..."
                   />
                   <p className="text-[10px] text-gray-400 mt-2 italic ml-1 font-medium">Assigned to a recurring routine bucket.</p>
                 </div>

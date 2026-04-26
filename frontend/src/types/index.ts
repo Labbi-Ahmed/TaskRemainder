@@ -21,6 +21,7 @@ export interface Tag {
   name: string;
   color: string;
   timeSlotId?: string; // Optional link to a predefined time slot
+  categoryId?: string; // Optional: Bind this tag to a specific category (Hybrid Model)
 }
 
 export interface Task {
