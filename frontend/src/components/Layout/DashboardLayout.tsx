@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
-import { authUtils } from '../../utils/auth';
+import { User } from '../../types';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -8,17 +8,17 @@ interface DashboardLayoutProps {
   onViewChange: (view: string) => void;
   onLogout: () => void;
   onNewTask: () => void;
+  user: User;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView, onViewChange, onLogout, onNewTask }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView, onViewChange, onLogout, onNewTask, user }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const user = authUtils.getUser();
-  const userName = user?.name || 'User';
-  const userEmail = user?.email || '';
-  const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'U';
+  const userName = `${user.firstName} ${user.lastName}`;
+  const userEmail = user.email;
+  const initials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -43,6 +43,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView,
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         onNewTask={onNewTask}
         onLogout={onLogout}
+        user={user}
       />
 
       {/* Main Content Area */}
@@ -58,8 +59,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView,
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center space-x-3 focus:outline-none p-1 rounded-full hover:bg-gray-50 transition duration-150"
             >
-              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm border-2 border-white">
-                {initials}
+              <div className="w-8 h-8 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-sm border-2 border-white overflow-hidden">
+                {user.profilePicture ? (
+                  <img src={user.profilePicture} alt="User" className="w-full h-full object-cover" />
+                ) : (
+                  initials
+                )}
               </div>
               <div className="hidden md:block text-left">
                 <p className="text-sm font-bold text-gray-700 leading-none">{userName}</p>
@@ -82,7 +87,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView,
                 </div>
                 
                 <div className="py-1">
-                  <button className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition duration-150">
+                  <button 
+                    onClick={() => {
+                      onViewChange('profile');
+                      setIsProfileOpen(false);
+                    }}
+                    className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition duration-150"
+                  >
                     <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>

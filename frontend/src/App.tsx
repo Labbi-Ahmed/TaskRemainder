@@ -8,8 +8,10 @@ import TaskList from './components/Dashboard/TaskList';
 import Calendar from './components/Common/Calendar';
 import CategoryTagManager from './components/Dashboard/CategoryTagManager';
 import ScheduleMenu from './components/Dashboard/ScheduleMenu';
+import Profile from './components/Dashboard/Profile';
+import Settings from './components/Dashboard/Settings';
 import { authUtils } from './utils/auth';
-import { Category, Tag, Task, TimeSlot } from './types';
+import { Category, Tag, Task, TimeSlot, User, NotificationSettings } from './types';
 import './App.css';
 
 function App() {
@@ -27,6 +29,25 @@ function App() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
+
+  // User Profile State with localStorage persistence
+  const [user, setUser] = useState<User>(() => {
+    const saved = localStorage.getItem('user_profile');
+    return saved ? JSON.parse(saved) : {
+      firstName: 'Ahmed',
+      lastName: 'Labbi',
+      email: 'ahmed@example.com',
+      profilePicture: '',
+      settings: {
+        pushEnabled: false,
+        emailEnabled: true,
+        inAppEnabled: true,
+        soundEnabled: true,
+        dailyDigest: false,
+        leadTimeMinutes: 15,
+      }
+    };
+  });
   
   // Search and Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,9 +69,9 @@ function App() {
   const [tags, setTags] = useState<Tag[]>(() => {
     const saved = localStorage.getItem('task_tags');
     return saved ? JSON.parse(saved) : [
-      { id: '1', name: 'Tonight', color: '#ef4444' },
-      { id: '2', name: 'Weekly', color: '#3b82f6' },
-      { id: '3', name: 'React', color: '#06b6d4' },
+      { id: '1', name: 'Tonight', color: '#ef4444' }, // Global
+      { id: '2', name: 'Weekly', color: '#3b82f6', categoryId: '1' }, // Bound to Work
+      { id: '3', name: 'React', color: '#06b6d4', categoryId: '3' }, // Bound to Learning
     ];
   });
 
@@ -78,6 +99,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('task_time_slots', JSON.stringify(timeSlots));
   }, [timeSlots]);
+
+  useEffect(() => {
+    localStorage.setItem('user_profile', JSON.stringify(user));
+  }, [user]);
 
 
   const handleAddCategory = (category: Omit<Category, 'id'>) => {
@@ -120,6 +145,14 @@ function App() {
     setTimeSlots(prev => prev.map(s => s.id === id ? { ...s, ...updatedSlot } : s));
   };
 
+  const handleUpdateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+  };
+
+  const handleUpdateSettings = (newSettings: NotificationSettings) => {
+    setUser(prev => ({ ...prev, settings: newSettings }));
+  };
+
   // Persistence and loading simulation for activeView
   useEffect(() => {
     if (currentPage === 'dashboard') {
@@ -160,11 +193,11 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>(() => {
     const saved = localStorage.getItem('task_items');
     return saved ? JSON.parse(saved) : [
-      { id: 1, title: 'Learn Advanced React Patterns', timeSlotId: '4', priority: 'High', status: 'Pending', category: '3', tags: ['1', '3'] },
+      { id: 1, title: 'Learn Advanced React Patterns', timeSlotId: '4', priority: 'High', status: 'Pending', category: '3', tags: ['3'] },
       { id: 2, title: 'Weekly Market Research', timeSlotId: '5', priority: 'Medium', status: 'Pending', category: '1', tags: ['2'] },
-      { id: 3, title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed', category: '1', tags: ['3'] },
+      { id: 3, title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed', category: '1', tags: ['2'] },
       { id: 4, title: 'Quick: JavaScript Deep Dive', timeSlotId: '2', priority: 'High', status: 'Pending', category: '3', tags: ['1'] },
-      { id: 5, title: 'Check new YouTube tutorials', timeSlotId: '1', priority: 'Low', status: 'Pending', category: '3', tags: ['2', '3'] },
+      { id: 5, title: 'Check new YouTube tutorials', timeSlotId: '1', priority: 'Low', status: 'Pending', category: '3', tags: ['1', '3'] },
     ];
   });
 
@@ -211,8 +244,6 @@ function App() {
         }
     } else if (showTodayOnly || startDate || endDate) {
         // For bucket tasks, they don't have a strict due date, so they might not match date filters
-        // Unless we decide they match "Today" if the bucket repeats today.
-        // For now, keep it simple: strict filters only apply to strict dates.
         matchesDate = false;
     }
     
@@ -397,9 +428,22 @@ function App() {
             onUpdateSlot={handleUpdateSlot}
           />
         );
+      case 'profile':
+        return (
+          <Profile 
+            user={user} 
+            onUpdateUser={handleUpdateUser} 
+          />
+        );
+      case 'settings':
+        return (
+            <Settings 
+                user={user} 
+                onUpdateSettings={handleUpdateSettings} 
+            />
+        );
       case 'library':
       case 'analytics':
-      case 'settings':
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <div className="w-24 h-24 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
@@ -429,6 +473,7 @@ function App() {
             onViewChange={setActiveView} 
             onLogout={handleLogout}
             onNewTask={() => setIsTaskModalOpen(true)}
+            user={user}
           >
             {renderDashboardView()}
             

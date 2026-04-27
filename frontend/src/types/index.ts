@@ -37,3 +37,22 @@ export interface Task {
   category?: string;    // ID of the category
   tags?: string[];      // IDs of the tags
 }
+
+export interface User {
+  firstName: string;
+  lastName: string;
+  email: string;
+  profilePicture?: string;
+  settings: NotificationSettings;
+}
+
+export interface NotificationSettings {
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+  inAppEnabled: boolean;
+  soundEnabled: boolean;
+  dailyDigest: boolean;
+  leadTimeMinutes: number; // Remind X minutes before
+  quietHoursStart?: string; // 24h format
+  quietHoursEnd?: string;
+}

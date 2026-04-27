@@ -127,8 +127,18 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 800));
       
+      // CRITICAL FIX: Only save tags that belong to the currently selected category 
+      // (or global tags if no category is selected). This prevents "mixed" tags from appearing.
+      const validTags = formData.tags.filter(tagId => {
+        const tag = tags.find(t => t.id === tagId);
+        if (!tag) return false;
+        // If category is set, tag must match it. If category is empty, tag must be global.
+        return tag.categoryId === (formData.category || undefined);
+      });
+
       const taskData = {
         ...formData,
+        tags: validTags,
         dueDate: scheduleMode === 'custom' ? new Date(formData.dueDate).toISOString() : undefined,
         timeSlotId: scheduleMode === 'bucket' ? formData.timeSlotId : undefined
       };
@@ -152,6 +162,18 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     categories.map(c => ({ value: c.id, label: c.name, color: c.color })),
     [categories]
   );
+
+  const filteredTags = useMemo(() => {
+    return tags.filter(tag => {
+      if (formData.category) {
+        // If category is selected, show tags bound to this category
+        return tag.categoryId === formData.category;
+      } else {
+        // If no category selected, show global tags
+        return !tag.categoryId;
+      }
+    });
+  }, [tags, formData.category]);
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto border border-gray-100">
@@ -291,12 +313,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Tags (Informational)</label>
-            <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-md bg-white">
-              {tags.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">No tags available.</p>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                {formData.category ? `Tags for ${categories.find(c => c.id === formData.category)?.name}` : 'Global Tags'}
+            </label>
+            <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-md bg-white min-h-[50px]">
+              {filteredTags.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">No relevant tags available.</p>
               ) : (
-                tags.map((tag) => {
+                filteredTags.map((tag) => {
                   const isSelected = formData.tags.includes(tag.id);
                   const slot = tag.timeSlotId ? timeSlots.find(s => s.id === tag.timeSlotId) : null;
                   return (
@@ -332,7 +356,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
                 })
               )}
             </div>
-            <p className="text-[9px] text-gray-400 mt-2 italic ml-1">* Tags show their routine times, but do not override the main schedule selected above.</p>
+            <p className="text-[9px] text-gray-400 mt-2 italic ml-1">* Select a category above to see related tags.</p>
           </div>
         </div>
 
