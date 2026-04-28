@@ -10,37 +10,43 @@ export interface User {
 
 export const authUtils = {
   setToken: (token: string) => {
-    localStorage.setItem(TOKEN_KEY, token);
+    if (typeof window !== 'undefined') localStorage.setItem(TOKEN_KEY, token);
   },
 
   getToken: () => {
+    if (typeof window === 'undefined') return null;
     return localStorage.getItem(TOKEN_KEY);
   },
 
   setUser: (user: User) => {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    if (typeof window !== 'undefined') localStorage.setItem(USER_KEY, JSON.stringify(user));
   },
 
   getUser: (): User | null => {
+    if (typeof window === 'undefined') return null;
     const user = localStorage.getItem(USER_KEY);
     return user ? JSON.parse(user) : null;
   },
 
   setView: (view: string) => {
-    localStorage.setItem(VIEW_KEY, view);
+    if (typeof window !== 'undefined') localStorage.setItem(VIEW_KEY, view);
   },
 
   getView: (): string | null => {
+    if (typeof window === 'undefined') return null;
     return localStorage.getItem(VIEW_KEY);
   },
 
   logout: () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(VIEW_KEY);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(VIEW_KEY);
+    }
   },
 
   isAuthenticated: () => {
+    if (typeof window === 'undefined') return false;
     return !!localStorage.getItem(TOKEN_KEY);
   }
 };

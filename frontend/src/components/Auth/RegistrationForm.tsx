@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import AuthLayout from './AuthLayout';
 import Input from '../Common/Input';

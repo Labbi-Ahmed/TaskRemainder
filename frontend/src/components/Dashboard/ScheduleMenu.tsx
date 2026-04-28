@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import { TimeSlot, TimeSlotType } from '../../types';
 import Button from '../Common/Button';

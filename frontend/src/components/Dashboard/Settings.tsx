@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import { User, NotificationSettings } from '../../types';
 import Button from '../Common/Button';

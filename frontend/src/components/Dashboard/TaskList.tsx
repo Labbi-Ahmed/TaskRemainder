@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import TaskDetailModal from './TaskDetailModal';

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+"use client";
+import React, { useState, useEffect, useMemo } from 'react';
 import Input from '../Common/Input';
 import Select from '../Common/Select';
 import SearchableSelect from '../Common/SearchableSelect';

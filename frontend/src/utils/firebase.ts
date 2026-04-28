@@ -1,8 +1,7 @@
 import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, onMessage, Messaging } from "firebase/messaging";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 // Your web app's Firebase configuration
-// Replace these with your actual Firebase project values from the Firebase Console
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -14,12 +13,13 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
 
 export const requestForToken = async () => {
+  if (typeof window === 'undefined') return null;
+  const messaging = getMessaging(app);
   try {
     const currentToken = await getToken(messaging, {
-      vapidKey: 'YOUR_PUBLIC_VAPID_KEY' // Get this from Firebase Console -> Cloud Messaging settings
+      vapidKey: 'YOUR_PUBLIC_VAPID_KEY'
     });
     if (currentToken) {
       console.log('current token for client: ', currentToken);
@@ -36,10 +36,12 @@ export const requestForToken = async () => {
 
 export const onMessageListener = () =>
   new Promise((resolve) => {
+    if (typeof window === 'undefined') return;
+    const messaging = getMessaging(app);
     onMessage(messaging, (payload) => {
       console.log("payload", payload);
       resolve(payload);
     });
   });
 
-export default messaging;
+export default app;

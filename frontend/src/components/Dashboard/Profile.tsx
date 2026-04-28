@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useRef } from 'react';
 import { User } from '../../types';
 import Button from '../Common/Button';
