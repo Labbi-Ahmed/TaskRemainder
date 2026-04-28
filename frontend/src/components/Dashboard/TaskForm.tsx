@@ -31,8 +31,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  const [scheduleMode, setScheduleMode] = useState<'custom' | 'bucket'>(
-    initialData?.timeSlotId ? 'bucket' : 'custom'
+  const [scheduleSelection, setScheduleSelection] = useState<string>(
+    initialData?.timeSlotId ? initialData.timeSlotId : (initialData?.dueDate ? 'custom' : '')
   );
 
   const [formData, setFormData] = useState({
@@ -41,7 +41,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     description: initialData?.description || '',
     notes: initialData?.notes || '',
     dueDate: formatInitialDate(initialData?.dueDate),
-    timeSlotId: initialData?.timeSlotId || '',
     priority: initialData?.priority || 'Medium',
     category: initialData?.category || '',
     tags: (initialData?.tags || []) as string[],
@@ -74,12 +73,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     }
   };
 
-  const handleTimeSlotChange = (val: string) => {
-    setFormData(prev => ({ ...prev, timeSlotId: val }));
-    if (errors.timeSlotId) {
+  const handleScheduleChange = (val: string) => {
+    setScheduleSelection(val);
+    if (errors.scheduleSelection) {
       setErrors(prev => {
         const newErrors = { ...prev };
-        delete newErrors.timeSlotId;
+        delete newErrors.scheduleSelection;
         return newErrors;
       });
     }
@@ -102,12 +101,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     const newErrors: Record<string, string> = {};
     if (!formData.title.trim()) newErrors.title = 'Title is required';
     
-    if (scheduleMode === 'custom' && !formData.dueDate) {
+    if (scheduleSelection === 'custom' && !formData.dueDate) {
       newErrors.dueDate = 'Due date and time are required for custom scheduling';
     }
     
-    if (scheduleMode === 'bucket' && (!formData.timeSlotId || formData.timeSlotId === '')) {
-      newErrors.timeSlotId = 'Please select a predefined time slot';
+    if (scheduleSelection !== 'custom' && !scheduleSelection) {
+      newErrors.scheduleSelection = 'Please select a schedule option';
     }
     
     if (formData.contentLink && !/^https?:\/\/.+/.test(formData.contentLink)) {
@@ -127,20 +126,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 800));
       
-      // CRITICAL FIX: Only save tags that belong to the currently selected category 
-      // (or global tags if no category is selected). This prevents "mixed" tags from appearing.
       const validTags = formData.tags.filter(tagId => {
         const tag = tags.find(t => t.id === tagId);
         if (!tag) return false;
-        // If category is set, tag must match it. If category is empty, tag must be global.
         return tag.categoryId === (formData.category || undefined);
       });
 
       const taskData = {
         ...formData,
         tags: validTags,
-        dueDate: scheduleMode === 'custom' ? new Date(formData.dueDate).toISOString() : undefined,
-        timeSlotId: scheduleMode === 'bucket' ? formData.timeSlotId : undefined
+        dueDate: scheduleSelection === 'custom' ? new Date(formData.dueDate).toISOString() : undefined,
+        timeSlotId: scheduleSelection !== 'custom' ? scheduleSelection : undefined
       };
       
       onSubmit(taskData);
@@ -151,12 +147,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
     }
   };
 
-  const timeSlotOptions = useMemo(() => 
-    timeSlots.map(slot => ({
+  const scheduleOptions = useMemo(() => [
+    { value: 'custom', label: '🗓️ Custom Time Slot', isSpecial: true },
+    ...timeSlots.map(slot => ({
       value: slot.id,
       label: `${slot.name} (${slot.hour}:${slot.minute.toString().padStart(2, '0')})`
-    })),
-  [timeSlots]);
+    }))
+  ], [timeSlots]);
 
   const categoryOptions = useMemo(() => 
     categories.map(c => ({ value: c.id, label: c.name, color: c.color })),
@@ -166,10 +163,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
   const filteredTags = useMemo(() => {
     return tags.filter(tag => {
       if (formData.category) {
-        // If category is selected, show tags bound to this category
         return tag.categoryId === formData.category;
       } else {
-        // If no category selected, show global tags
         return !tag.categoryId;
       }
     });
@@ -230,37 +225,24 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
             />
           </div>
 
-          {/* Scheduling UI */}
+          {/* Unified Scheduling UI */}
           <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Schedule Reminder</label>
-              <div className="flex bg-gray-100 p-1 rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => setScheduleMode('custom')}
-                  className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
-                    scheduleMode === 'custom' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Custom Time
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setScheduleMode('bucket')}
-                  className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
-                    scheduleMode === 'bucket' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Predefined
-                </button>
-              </div>
-            </div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Schedule Reminder</label>
+            
+            <div className="space-y-4">
+              <SearchableSelect
+                label="Select Time"
+                options={scheduleOptions}
+                value={scheduleSelection}
+                onChange={handleScheduleChange}
+                error={errors.scheduleSelection}
+                placeholder="Select a time slot"
+              />
 
-            <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100 min-h-[100px] flex items-center">
-              {scheduleMode === 'custom' ? (
-                <div className="w-full animate-in fade-in slide-in-from-top-1 duration-200">
+              {scheduleSelection === 'custom' && (
+                <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100 animate-in fade-in slide-in-from-top-1 duration-200">
                   <Input
-                    label="Due Date"
+                    label="Custom Time Slot"
                     name="dueDate"
                     type="datetime-local"
                     value={formData.dueDate}
@@ -269,20 +251,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
                   />
                   <p className="text-[10px] text-gray-400 mt-2 italic ml-1 font-medium">Pick an exact time for this notification.</p>
                 </div>
-              ) : (
-                <div className="w-full animate-in fade-in slide-in-from-bottom-1 duration-200">
-                  <SearchableSelect
-                    label="Time Slot"
-                    options={timeSlotOptions}
-                    value={formData.timeSlotId}
-                    onChange={handleTimeSlotChange}
-                    error={errors.timeSlotId}
-                    placeholder="Search time slot..."
-                  />
-                  <p className="text-[10px] text-gray-400 mt-2 italic ml-1 font-medium">Assigned to a recurring routine bucket.</p>
-                </div>
               )}
             </div>
+            {scheduleSelection !== 'custom' && scheduleSelection && (
+              <p className="text-[10px] text-gray-400 italic ml-1 font-medium">Assigned to a recurring routine bucket.</p>
+            )}
           </div>
 
           <div>

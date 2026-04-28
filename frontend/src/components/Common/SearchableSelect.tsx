@@ -4,6 +4,7 @@ interface Option {
   value: string;
   label: string;
   color?: string;
+  isSpecial?: boolean;
 }
 
 interface SearchableSelectProps {
@@ -140,30 +141,38 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
             {filteredOptions.length === 0 ? (
               <li className="px-4 py-3 text-xs text-center text-gray-400 italic">No results found</li>
             ) : (
-              filteredOptions.map((option) => (
-                <li
-                  key={option.value}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelect(option.value);
-                  }}
-                  className={`flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-indigo-50 transition-colors ${
-                    value === option.value ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-gray-700'
-                  }`}
-                >
-                  {option.color && (
-                    <div 
-                      className="w-3 h-3 rounded-full mr-3 flex-shrink-0" 
-                      style={{ backgroundColor: option.color }}
-                    />
+              filteredOptions.map((option, index) => (
+                <React.Fragment key={option.value}>
+                  <li
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelect(option.value);
+                    }}
+                    className={`flex items-center px-3 py-2.5 text-sm cursor-pointer transition-colors ${
+                      value === option.value 
+                        ? 'bg-indigo-50 text-indigo-700 font-bold' 
+                        : option.isSpecial 
+                          ? 'text-indigo-600 font-semibold bg-indigo-50/30 hover:bg-indigo-50' 
+                          : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {option.color && (
+                      <div 
+                        className="w-3 h-3 rounded-full mr-3 flex-shrink-0" 
+                        style={{ backgroundColor: option.color }}
+                      />
+                    )}
+                    <span className="truncate">{option.label}</span>
+                    {value === option.value && (
+                      <svg className="ml-auto w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </li>
+                  {option.isSpecial && index < filteredOptions.length - 1 && (
+                    <div className="border-b border-gray-100 my-1 mx-2" />
                   )}
-                  <span className="truncate">{option.label}</span>
-                  {value === option.value && (
-                    <svg className="ml-auto w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </li>
+                </React.Fragment>
               ))
             )}
           </ul>
