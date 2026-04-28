@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, NotificationSettings } from '../../types';
 import Button from '../Common/Button';
 import Select from '../Common/Select';
+import { requestForToken } from '../../utils/firebase';
 
 interface SettingsProps {
   user: User;
@@ -22,7 +23,27 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateSettings }) => {
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
 
-  const handleToggle = (key: keyof NotificationSettings) => {
+  const [isRegistering, setIsRegistering] = useState(false);
+
+  const handleToggle = async (key: keyof NotificationSettings) => {
+    if (key === 'pushEnabled' && !settings.pushEnabled) {
+      // Enabling push, need to get token
+      setIsRegistering(true);
+      const token = await requestForToken();
+      setIsRegistering(false);
+      
+      if (token) {
+        // Here you would typically send the token to your backend
+        console.log('FCM Token received, ready for backend:', token);
+        const newSettings = { ...settings, [key]: true };
+        setSettings(newSettings);
+        onUpdateSettings(newSettings);
+      } else {
+        alert('Could not enable push notifications. Please check permissions.');
+      }
+      return;
+    }
+
     const newSettings = { ...settings, [key]: !settings[key] };
     setSettings(newSettings);
     onUpdateSettings(newSettings);
@@ -41,7 +62,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateSettings }) => {
     setPermissionStatus(permission);
     
     if (permission === 'granted') {
-      handleToggle('pushEnabled');
+      await handleToggle('pushEnabled');
     }
   };
 

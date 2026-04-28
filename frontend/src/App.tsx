@@ -12,9 +12,24 @@ import Profile from './components/Dashboard/Profile';
 import Settings from './components/Dashboard/Settings';
 import { authUtils } from './utils/auth';
 import { Category, Tag, Task, TimeSlot, User, NotificationSettings } from './types';
+import { onMessageListener } from './utils/firebase';
 import './App.css';
 
 function App() {
+  // Foreground notification listener
+  useEffect(() => {
+    const unsubscribe = onMessageListener().then((payload: any) => {
+      console.log('Foreground notification received:', payload);
+      // In a real app, you'd use a toast library here (e.g., react-hot-toast)
+      if (payload?.notification) {
+        alert(`${payload.notification.title}\n${payload.notification.body}`);
+      }
+    }).catch(err => console.log('failed: ', err));
+
+    return () => {
+      // Logic to unsubscribe if needed
+    };
+  }, []);
   // Initialize state from localStorage or defaults
   const [currentPage, setCurrentPage] = useState(() => {
     if (authUtils.isAuthenticated()) return 'dashboard';
