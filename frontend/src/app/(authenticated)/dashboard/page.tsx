@@ -1,11 +1,13 @@
 "use client";
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Dashboard from '../../../components/Dashboard/Dashboard';
 import { useTaskContext } from '../../../context/TaskContext';
 import TaskForm from '../../../components/Dashboard/TaskForm';
 import { Task } from '../../../types';
 
 export default function DashboardOverviewPage() {
+  const router = useRouter();
   const { tasks, categories, tags, timeSlots, isLoading, toggleTaskStatus, deleteTask, setTasks } = useTaskContext();
   const [editingTask, setEditingTask] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -13,6 +15,14 @@ export default function DashboardOverviewPage() {
   const handleEditTask = (task: any) => {
     setEditingTask(task);
     setIsEditModalOpen(true);
+  };
+
+  const handleViewChange = (view: string) => {
+    if (view === 'tasks') {
+      router.push('/dashboard/tasks');
+    } else if (view === 'today') {
+      router.push('/dashboard/tasks?filter=Today');
+    }
   };
 
   return (
@@ -24,12 +34,12 @@ export default function DashboardOverviewPage() {
         timeSlots={timeSlots}
         isLoading={isLoading}
         onNewTask={() => {}} 
-        onViewChange={(view) => {}}
+        onViewChange={handleViewChange}
         onToggleStatus={toggleTaskStatus}
         onEdit={handleEditTask}
         onDelete={deleteTask}
       />
-
+...
       {isEditModalOpen && (
         <div className="fixed inset-0 z-[100] overflow-y-auto">
           <div 

@@ -1,11 +1,15 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTaskContext } from '../../../../context/TaskContext';
 import TaskList from '../../../../components/Dashboard/TaskList';
 import TaskForm from '../../../../components/Dashboard/TaskForm';
 import Calendar from '../../../../components/Common/Calendar';
 
-export default function TasksPage() {
+function TasksContent() {
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get('filter');
+
   const { 
     tasks, categories, tags, timeSlots, isLoading, counts,
     toggleTaskStatus, deleteTask, setTasks 
@@ -18,16 +22,34 @@ export default function TasksPage() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
 
+  useEffect(() => {
+    if (filterParam) {
+      setStatusFilter(filterParam);
+    }
+  }, [filterParam]);
+
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     
     // Status Filter logic
     let matchesStatus = true;
     const todayStr = new Date('2026-04-28').toISOString().split('T')[0];
+    const dayOfWeek = new Date('2026-04-28').getDay();
+    const dayOfMonth = new Date('2026-04-28').getDate();
     const now = new Date('2026-04-28').getTime();
 
+    // Find which buckets are "active" today
+    const activeTodaySlots = timeSlots.filter(slot => {
+      if (slot.type === 'daily') return true;
+      if (slot.type === 'weekly') return slot.daysOfWeek?.includes(dayOfWeek);
+      if (slot.type === 'monthly') return slot.dayOfMonth === dayOfMonth;
+      return false;
+    }).map(s => s.id);
+
     if (statusFilter === 'Today') {
-      matchesStatus = task.dueDate?.startsWith(todayStr) && task.status === 'Pending';
+      const isDueToday = task.dueDate?.startsWith(todayStr);
+      const isSlotToday = task.timeSlotId && activeTodaySlots.includes(task.timeSlotId);
+      matchesStatus = (isDueToday || isSlotToday) && task.status === 'Pending';
     } else if (statusFilter === 'Overdue') {
       matchesStatus = task.status === 'Pending' && task.dueDate && new Date(task.dueDate).getTime() < now;
     } else if (statusFilter !== 'All') {
@@ -199,5 +221,17 @@ export default function TasksPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TasksPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-6xl mx-auto px-4 py-8 flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    }>
+      <TasksContent />
+    </Suspense>
   );
 }

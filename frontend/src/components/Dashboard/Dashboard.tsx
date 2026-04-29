@@ -60,9 +60,9 @@ const Dashboard: React.FC<DashboardProps> = ({
       try {
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        const todayStr = new Date('2026-04-22').toISOString().split('T')[0];
-        const dayOfWeek = new Date('2026-04-22').getDay();
-        const dayOfMonth = new Date('2026-04-22').getDate();
+        const todayStr = new Date('2026-04-28').toISOString().split('T')[0];
+        const dayOfWeek = new Date('2026-04-28').getDay();
+        const dayOfMonth = new Date('2026-04-28').getDate();
 
         // Find which buckets are "active" today
         const activeTodaySlots = timeSlots.filter(slot => {
@@ -191,7 +191,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             color="border-red-500"
             isLoading={isLoading}
             icon={<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-            onClick={() => onViewChange?.('tasks')}
+            onClick={() => onViewChange?.('today')}
           />
         </div>
 
