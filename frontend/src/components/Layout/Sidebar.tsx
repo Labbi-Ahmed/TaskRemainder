@@ -50,19 +50,19 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse, onLogout
     { 
       id: 'tasks', 
       label: 'Task List', 
-      href: '/dashboard/tasks',
+      href: '/tasks',
       icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg> 
     },
     { 
       id: 'schedule', 
       label: 'Schedule', 
-      href: '/dashboard/schedule',
+      href: '/schedule',
       icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> 
     },
     { 
       id: 'categories', 
       label: 'Categories & Tags', 
-      href: '/dashboard/categories',
+      href: '/categories',
       icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 11h.01M7 15h.01M11 7h.01M11 11h.01M11 15h.01M15 7h.01M15 11h.01M15 15h.01" /></svg> 
     },
     { 

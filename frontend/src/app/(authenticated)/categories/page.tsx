@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
-import { useTaskContext } from '../../../../context/TaskContext';
-import CategoryTagManager from '../../../../components/Dashboard/CategoryTagManager';
+import { useTaskContext } from '../../../context/TaskContext';
+import CategoryTagManager from '../../../components/Dashboard/CategoryTagManager';
 
 export default function CategoriesPage() {
   const { 

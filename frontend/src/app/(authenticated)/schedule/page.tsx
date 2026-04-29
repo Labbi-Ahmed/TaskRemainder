@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
-import { useTaskContext } from '../../../../context/TaskContext';
-import ScheduleMenu from '../../../../components/Dashboard/ScheduleMenu';
+import { useTaskContext } from '../../../context/TaskContext';
+import ScheduleMenu from '../../../components/Dashboard/ScheduleMenu';
 
 export default function SchedulePage() {
   const { timeSlots, addSlot, deleteSlot, updateSlot } = useTaskContext();

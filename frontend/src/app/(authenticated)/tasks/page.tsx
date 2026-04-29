@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTaskContext } from '../../../../context/TaskContext';
-import TaskList from '../../../../components/Dashboard/TaskList';
-import TaskForm from '../../../../components/Dashboard/TaskForm';
-import Calendar from '../../../../components/Common/Calendar';
+import { useTaskContext } from '../../../context/TaskContext';
+import TaskList from '../../../components/Dashboard/TaskList';
+import TaskForm from '../../../components/Dashboard/TaskForm';
+import Calendar from '../../../components/Common/Calendar';
 
 function TasksContent() {
   const searchParams = useSearchParams();

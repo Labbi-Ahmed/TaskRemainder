@@ -1,25 +1,28 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { authUtils } from '../utils/auth';
 import { User } from '../types';
 import UserBadge from '../components/Common/UserBadge';
 
 export default function LandingPage() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     setMounted(true);
     if (authUtils.isAuthenticated()) {
+      router.push('/dashboard');
       const savedUser = localStorage.getItem('user_profile');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
       }
     }
-  }, []);
+  }, [router]);
 
-  if (!mounted) return null;
+  if (!mounted || authUtils.isAuthenticated()) return null;
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-700">

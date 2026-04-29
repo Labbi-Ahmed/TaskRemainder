@@ -19,9 +19,9 @@ export default function DashboardOverviewPage() {
 
   const handleViewChange = (view: string) => {
     if (view === 'tasks') {
-      router.push('/dashboard/tasks');
+      router.push('/tasks');
     } else if (view === 'today') {
-      router.push('/dashboard/tasks?filter=Today');
+      router.push('/tasks?filter=Today');
     }
   };
 
