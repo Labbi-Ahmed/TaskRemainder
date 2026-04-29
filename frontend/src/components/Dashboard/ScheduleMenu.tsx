@@ -23,7 +23,9 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
   const [type, setType] = useState<TimeSlotType>('daily');
   const [time, setTime] = useState('09:00');
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
+  const [weekOfMonth, setWeekOfMonth] = useState(1);
   const [dayOfMonth, setDayOfMonth] = useState(1);
+  const [monthOfYear, setMonthOfYear] = useState(0);
 
   // Edit state
   const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
@@ -31,26 +33,57 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
   const [editType, setEditType] = useState<TimeSlotType>('daily');
   const [editTime, setEditTime] = useState('09:00');
   const [editDaysOfWeek, setEditDaysOfWeek] = useState<number[]>([]);
+  const [editWeekOfMonth, setEditWeekOfMonth] = useState(1);
   const [editDayOfMonth, setEditDayOfMonth] = useState(1);
+  const [editMonthOfYear, setEditMonthOfYear] = useState(0);
 
   // Confirmation Modal
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [slotToDelete, setSlotToDelete] = useState<TimeSlot | null>(null);
 
   const daysOptions = [
-    { value: '0', label: 'Sun' },
-    { value: '1', label: 'Mon' },
-    { value: '2', label: 'Tue' },
-    { value: '3', label: 'Wed' },
-    { value: '4', label: 'Thu' },
-    { value: '5', label: 'Fri' },
-    { value: '6', label: 'Sat' },
+    { value: '0', label: 'Sunday', short: 'Sun' },
+    { value: '1', label: 'Monday', short: 'Mon' },
+    { value: '2', label: 'Tuesday', short: 'Tue' },
+    { value: '3', label: 'Wednesday', short: 'Wed' },
+    { value: '4', label: 'Thursday', short: 'Thu' },
+    { value: '5', label: 'Friday', short: 'Fri' },
+    { value: '6', label: 'Saturday', short: 'Sat' },
   ];
+
+  const occurrenceOptions = [
+    { value: '1', label: 'First' },
+    { value: '2', label: 'Second' },
+    { value: '3', label: 'Third' },
+    { value: '4', label: 'Fourth' },
+    { value: '-1', label: 'Last' },
+  ];
+
+  const monthsOptions = [
+    { value: '0', label: 'January' },
+    { value: '1', label: 'February' },
+    { value: '2', label: 'March' },
+    { value: '3', label: 'April' },
+    { value: '4', label: 'May' },
+    { value: '5', label: 'June' },
+    { value: '6', label: 'July' },
+    { value: '7', label: 'August' },
+    { value: '8', label: 'September' },
+    { value: '9', label: 'October' },
+    { value: '10', label: 'November' },
+    { value: '11', label: 'December' },
+  ];
+
+  const monthDayOptions = Array.from({ length: 31 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: (i + 1).toString()
+  }));
 
   const repeatOptions = [
     { value: 'daily', label: 'Daily' },
     { value: 'weekly', label: 'Weekly' },
     { value: 'monthly', label: 'Monthly' },
+    { value: 'yearly', label: 'Yearly' },
   ];
 
   const handleAdd = (e: React.FormEvent) => {
@@ -63,11 +96,15 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
       type,
       hour,
       minute,
-      daysOfWeek: type === 'weekly' ? daysOfWeek : undefined,
-      dayOfMonth: type === 'monthly' ? dayOfMonth : undefined,
+      daysOfWeek: (type === 'weekly' || type === 'monthly') ? daysOfWeek : undefined,
+      weekOfMonth: type === 'monthly' ? weekOfMonth : undefined,
+      dayOfMonth: (type === 'monthly' || type === 'yearly') ? dayOfMonth : undefined,
+      monthOfYear: type === 'yearly' ? monthOfYear : undefined,
     });
 
+    // Reset
     setName('');
+    setType('daily');
     setTime('09:00');
     setDaysOfWeek([]);
   };
@@ -78,7 +115,9 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
     setEditType(slot.type);
     setEditTime(`${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`);
     setEditDaysOfWeek(slot.daysOfWeek || []);
+    setEditWeekOfMonth(slot.weekOfMonth || 1);
     setEditDayOfMonth(slot.dayOfMonth || 1);
+    setEditMonthOfYear(slot.monthOfYear || 0);
   };
 
   const handleSaveEdit = () => {
@@ -90,17 +129,24 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
       type: editType,
       hour,
       minute,
-      daysOfWeek: editType === 'weekly' ? editDaysOfWeek : undefined,
-      dayOfMonth: editType === 'monthly' ? editDayOfMonth : undefined,
+      daysOfWeek: (editType === 'weekly' || editType === 'monthly') ? editDaysOfWeek : undefined,
+      weekOfMonth: editType === 'monthly' ? editWeekOfMonth : undefined,
+      dayOfMonth: (editType === 'monthly' || editType === 'yearly') ? editDayOfMonth : undefined,
+      monthOfYear: editType === 'yearly' ? editMonthOfYear : undefined,
     });
 
     setEditingSlot(null);
   };
 
-  const toggleDay = (day: number, isEdit = false) => {
+  const toggleDay = (day: number, isEdit = false, single = false) => {
     const current = isEdit ? editDaysOfWeek : daysOfWeek;
     const setter = isEdit ? setEditDaysOfWeek : setDaysOfWeek;
     
+    if (single) {
+        setter([day]);
+        return;
+    }
+
     if (current.includes(day)) {
       setter(current.filter(d => d !== day));
     } else {
@@ -112,6 +158,132 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
     const h = hour % 12 || 12;
     const ampm = hour >= 12 ? 'PM' : 'AM';
     return `${h}:${minute.toString().padStart(2, '0')} ${ampm}`;
+  };
+
+  const renderRecurrenceOptions = (
+      currentType: TimeSlotType, 
+      currentDays: number[], 
+      currentWeek: number, 
+      currentMonthDay: number,
+      currentYearMonth: number,
+      isEdit = false
+  ) => {
+    switch (currentType) {
+        case 'daily':
+            return <p className="text-[10px] text-gray-400 italic mt-1 ml-1">Triggers every day at the selected time.</p>;
+        
+        case 'weekly':
+            return (
+                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Select Days</label>
+                    <div className="grid grid-cols-7 gap-1">
+                    {daysOptions.map((opt) => (
+                        <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => toggleDay(parseInt(opt.value), isEdit)}
+                            className={`h-9 w-full rounded-lg text-[10px] font-bold transition-all border ${
+                                currentDays.includes(parseInt(opt.value))
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-300'
+                            }`}
+                        >
+                            {opt.short}
+                        </button>
+                    ))}
+                    </div>
+                </div>
+            );
+
+        case 'monthly':
+            return (
+                <div className="animate-in fade-in slide-in-from-top-1 duration-200 space-y-4">
+                    <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Occurrence</label>
+                        <div className="flex flex-wrap gap-1">
+                            {occurrenceOptions.map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => isEdit ? setEditWeekOfMonth(parseInt(opt.value)) : setWeekOfMonth(parseInt(opt.value))}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${
+                                        currentWeek === parseInt(opt.value)
+                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                        : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-300'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Of the Week</label>
+                        <div className="grid grid-cols-7 gap-1">
+                            {daysOptions.map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => toggleDay(parseInt(opt.value), isEdit, true)}
+                                    className={`h-9 w-full rounded-lg text-[10px] font-bold transition-all border ${
+                                        currentDays[0] === parseInt(opt.value)
+                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                        : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-300'
+                                    }`}
+                                >
+                                    {opt.short}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <p className="text-[10px] text-gray-400 italic ml-1">e.g., "The {occurrenceOptions.find(o => parseInt(o.value) === currentWeek)?.label} {daysOptions.find(d => parseInt(d.value) === currentDays[0])?.label || 'Day'} of every month"</p>
+                </div>
+            );
+
+        case 'yearly':
+            return (
+                <div className="animate-in fade-in slide-in-from-top-1 duration-200 space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Month</label>
+                            <SearchableSelect
+                                label="Month"
+                                value={currentYearMonth.toString()}
+                                onChange={(val) => isEdit ? setEditMonthOfYear(parseInt(val)) : setMonthOfYear(parseInt(val))}
+                                options={monthsOptions}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Date</label>
+                            <SearchableSelect
+                                label="Date"
+                                value={currentMonthDay.toString()}
+                                onChange={(val) => isEdit ? setEditDayOfMonth(parseInt(val)) : setDayOfMonth(parseInt(val))}
+                                options={monthDayOptions}
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+        
+        default:
+            return null;
+    }
+  };
+
+  const getSlotSummary = (slot: TimeSlot) => {
+    switch (slot.type) {
+      case 'daily': return 'Every Day';
+      case 'weekly': return `Weekly on ${slot.daysOfWeek?.map(d => daysOptions[d].short).join(', ')}`;
+      case 'monthly': 
+        const occ = occurrenceOptions.find(o => o.value === slot.weekOfMonth?.toString())?.label;
+        const day = daysOptions.find(d => d.value === slot.daysOfWeek?.[0]?.toString())?.label;
+        return `Monthly on the ${occ} ${day}`;
+      case 'yearly':
+        const month = monthsOptions.find(m => m.value === slot.monthOfYear?.toString())?.label;
+        return `Yearly on ${month} ${slot.dayOfMonth}`;
+      default: return slot.type;
+    }
   };
 
   return (
@@ -141,9 +313,10 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
                   value={type}
                   onChange={(val) => setType(val as TimeSlotType)}
                   options={repeatOptions}
-                  placeholder="Select frequency..."
                 />
               </div>
+
+              {renderRecurrenceOptions(type, daysOfWeek, weekOfMonth, dayOfMonth, monthOfYear)}
 
               <div>
                 <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Target Time</label>
@@ -155,40 +328,7 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
                 />
               </div>
 
-              {type === 'weekly' && (
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Days of Week</label>
-                  <div className="flex flex-wrap gap-2">
-                    {daysOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => toggleDay(parseInt(opt.value))}
-                        className={`w-8 h-8 rounded-full text-xs font-bold transition-colors ${
-                          daysOfWeek.includes(parseInt(opt.value))
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {opt.label[0]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {type === 'monthly' && (
-                <Input
-                  label="Day of Month"
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={dayOfMonth.toString()}
-                  onChange={(e) => setDayOfMonth(parseInt(e.target.value))}
-                />
-              )}
-
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full mt-6">
                 Add Slot
               </Button>
             </form>
@@ -235,18 +375,18 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
                           </button>
                         </div>
                       </div>
-                      <div className="flex items-center text-sm text-gray-500 space-x-3">
-                        <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="flex flex-col space-y-1.5">
+                        <div className="flex items-center text-sm text-gray-600 font-medium">
+                          <svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           {formatTime(slot.hour, slot.minute)}
                         </div>
-                        <div className="flex items-center capitalize">
-                          <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="flex items-center text-xs text-gray-500">
+                          <svg className="w-3.5 h-3.5 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          {slot.type} {slot.type === 'weekly' && `(${slot.daysOfWeek?.map(d => daysOptions[d].label[0]).join(',')})`}
+                          {getSlotSummary(slot)}
                         </div>
                       </div>
                     </div>
@@ -283,9 +423,10 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
                     value={editType}
                     onChange={(val) => setEditType(val as TimeSlotType)}
                     options={repeatOptions}
-                    placeholder="Select frequency..."
                   />
                 </div>
+
+                {renderRecurrenceOptions(editType, editDaysOfWeek, editWeekOfMonth, editDayOfMonth, editMonthOfYear, true)}
 
                 <div>
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Target Time</label>
@@ -296,39 +437,6 @@ const ScheduleMenu: React.FC<ScheduleMenuProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
-
-                {editType === 'weekly' && (
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Days of Week</label>
-                    <div className="flex flex-wrap gap-2">
-                      {daysOptions.map((opt) => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => toggleDay(parseInt(opt.value), true)}
-                          className={`w-8 h-8 rounded-full text-xs font-bold transition-colors ${
-                            editDaysOfWeek.includes(parseInt(opt.value))
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {opt.label[0]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {editType === 'monthly' && (
-                  <Input
-                    label="Day of Month"
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={editDayOfMonth.toString()}
-                    onChange={(e) => setEditDayOfMonth(parseInt(e.target.value))}
-                  />
-                )}
               </div>
 
               <div className="mt-8 flex justify-end space-x-3">

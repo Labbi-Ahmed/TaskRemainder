@@ -4,7 +4,7 @@ export interface Category {
   color: string;
 }
 
-export type TimeSlotType = 'daily' | 'weekly' | 'monthly';
+export type TimeSlotType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface TimeSlot {
   id: string;
@@ -12,8 +12,10 @@ export interface TimeSlot {
   type: TimeSlotType;
   hour: number;
   minute: number;
-  daysOfWeek?: number[]; // 0-6 (Sunday-Saturday)
-  dayOfMonth?: number;   // 1-31
+  daysOfWeek?: number[];   // For Weekly: 0-6
+  weekOfMonth?: number;    // For Monthly: 1 (1st), 2 (2nd), 3 (3rd), 4 (4th), -1 (Last)
+  dayOfMonth?: number;     // For Yearly/Monthly fallback: 1-31
+  monthOfYear?: number;    // For Yearly: 0-11
 }
 
 export interface Tag {
