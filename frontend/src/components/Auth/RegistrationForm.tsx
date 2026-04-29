@@ -119,7 +119,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onToggle }) => {
   return (
     <AuthLayout
       title="Create Account"
-      subtitle="Join TaskRemainder today"
+      subtitle="Join TaskReminder today"
       icon={regIcon}
     >
       <form className="mt-8 space-y-4" onSubmit={handleSubmit}>

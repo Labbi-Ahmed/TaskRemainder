@@ -34,13 +34,13 @@ Users often save YouTube videos, articles, or social media posts but rarely come
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/Labbi-Ahmed/TaskRemainder.git
-cd TaskRemainder
+git clone https://github.com/Labbi-Ahmed/TaskReminder.git
+cd TaskReminder
 ```
 
 ### 2. Backend Setup
 The backend is located in the `backend/` directory (Coming soon).
-1. Create a database `taskremainder_db`.
+1. Create a database `TaskReminder_db`.
 2. Configure `application.properties` with your PostgreSQL credentials.
 3. Run: `mvn spring-boot:run`
 
