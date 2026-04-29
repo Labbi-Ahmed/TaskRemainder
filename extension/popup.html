@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskReminder</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="header-logo">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <span class="header-title">TaskReminder</span>
+    </div>
+    <div id="header-auth" style="display:none;">
+      <span class="header-user" id="header-email"></span>
+      <button class="btn-logout" id="btn-logout">Log out</button>
+    </div>
+  </header>
+
+  <!-- ── Login View ── -->
+  <div id="view-login" class="view active">
+    <p class="login-subtitle">Log in to add tasks from any page.</p>
+    <div id="login-message" class="message"></div>
+    <form id="login-form" autocomplete="on">
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com" required />
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="btn-primary" id="btn-login">Log in</button>
+    </form>
+  </div>
+
+  <!-- ── Add Task View ── -->
+  <div id="view-task" class="view">
+    <div id="task-message" class="message"></div>
+    <form id="task-form" autocomplete="off">
+
+      <!-- Title -->
+      <div class="form-group">
+        <label class="field-label">TASK TITLE <span class="req">*</span></label>
+        <input type="text" id="task-title" placeholder="What do you want to save?" />
+        <span class="field-error" id="err-title"></span>
+      </div>
+
+      <!-- Content Link -->
+      <div class="form-group">
+        <label class="field-label">CONTENT LINK (URL)</label>
+        <input type="url" id="task-link" placeholder="https://example.com/article-or-video" />
+        <span class="field-error" id="err-link"></span>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-group">
+        <label class="field-label">NOTES</label>
+        <textarea id="task-notes" rows="2" placeholder="Extra context or thoughts..."></textarea>
+      </div>
+
+      <!-- Schedule -->
+      <div class="form-group">
+        <label class="field-label">SCHEDULE REMINDER <span class="req">*</span></label>
+        <select id="task-schedule">
+          <option value="">Select a time slot</option>
+          <option value="custom">🗓️ Custom Time Slot</option>
+        </select>
+        <span class="field-error" id="err-schedule"></span>
+        <p class="field-hint" id="schedule-hint" style="display:none;">Assigned to a recurring routine bucket.</p>
+      </div>
+
+      <!-- Custom datetime (revealed when schedule = custom) -->
+      <div class="form-group custom-dt-group" id="custom-date-group" style="display:none;">
+        <label class="field-label">PICK EXACT TIME</label>
+        <input type="datetime-local" id="task-duedate" />
+        <span class="field-error" id="err-duedate"></span>
+        <p class="field-hint">Pick an exact time for this notification.</p>
+      </div>
+
+      <!-- Priority + Category row -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">PRIORITY</label>
+          <select id="task-priority">
+            <option value="Medium">⚡ Medium Priority</option>
+            <option value="High">🔥 High Priority</option>
+            <option value="Low">🌱 Low Priority</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="field-label">CATEGORY</label>
+          <select id="task-category">
+            <option value="">No category</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="form-group">
+        <label class="field-label" id="tags-label">GLOBAL TAGS</label>
+        <div class="tags-container" id="tags-container">
+          <span class="tags-empty">No tags available.</span>
+        </div>
+        <p class="field-hint">Select a category above to see related tags.</p>
+      </div>
+
+      <button type="submit" class="btn-primary" id="btn-add">Create Task</button>
+    </form>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

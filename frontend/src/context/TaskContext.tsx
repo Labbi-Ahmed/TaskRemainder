@@ -105,6 +105,15 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    const reload = () => {
+      const saved = localStorage.getItem('task_items');
+      if (saved) setTasks(JSON.parse(saved));
+    };
+    window.addEventListener('extension-task-added', reload);
+    return () => window.removeEventListener('extension-task-added', reload);
+  }, []);
+
+  useEffect(() => {
     if (mounted) localStorage.setItem('user_profile', JSON.stringify(user));
   }, [user, mounted]);
 
