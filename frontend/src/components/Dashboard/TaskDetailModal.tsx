@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Task, Category, Tag, TimeSlot } from '../../types';
 import Button from '../Common/Button';
+import ConfirmationModal from '../Common/ConfirmationModal';
 
 interface TaskDetailModalProps {
   task: Task | null;
@@ -23,6 +24,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onEdit,
   onDelete
 }) => {
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+
   if (!isOpen || !task) return null;
 
   const category = categories.find(c => c.id === task.category);
@@ -214,12 +217,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             <Button 
               variant="secondary" 
               className="w-full sm:w-auto"
-              onClick={() => {
-                if (window.confirm(`Are you sure you want to delete "${task.title}"?`)) {
-                  onDelete?.(task.id);
-                  onClose();
-                }
-              }}
+              onClick={() => setIsConfirmDeleteOpen(true)}
             >
               <span className="text-red-600">Delete</span>
             </Button>
@@ -233,6 +231,20 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={isConfirmDeleteOpen}
+        title="Delete Task"
+        message={`Are you sure you want to delete "${task.title}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          onDelete?.(task.id);
+          setIsConfirmDeleteOpen(false);
+          onClose();
+        }}
+        onCancel={() => setIsConfirmDeleteOpen(false)}
+        variant="danger"
+      />
     </div>
   );
 };

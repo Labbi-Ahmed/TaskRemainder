@@ -8,7 +8,10 @@ interface CalendarProps {
 }
 
 const Calendar: React.FC<CalendarProps> = ({ startDate, endDate, onSelectRange, onClose }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 3)); // Default to April 2026 for this project context
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth());
+  });
   
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const startDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();

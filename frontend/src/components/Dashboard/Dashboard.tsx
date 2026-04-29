@@ -60,9 +60,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       try {
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        const todayStr = new Date('2026-04-22').toISOString().split('T')[0];
-        const dayOfWeek = new Date('2026-04-22').getDay();
-        const dayOfMonth = new Date('2026-04-22').getDate();
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const dayOfWeek = today.getDay();
+        const dayOfMonth = today.getDate();
 
         // Find which buckets are "active" today
         const activeTodaySlots = timeSlots.filter(slot => {

@@ -28,7 +28,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<any>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // User Profile State with localStorage persistence
   const [user, setUser] = useState<User>(() => {
@@ -216,7 +216,7 @@ function App() {
     );
   };
 
-  const handleEditTask = (task: any) => {
+  const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setIsTaskModalOpen(true);
   };
@@ -235,7 +235,7 @@ function App() {
         const taskDate = new Date(taskDateStr).getTime();
         
         if (showTodayOnly) {
-            const todayStr = new Date('2026-04-22').toISOString().split('T')[0];
+            const todayStr = new Date().toISOString().split('T')[0];
             matchesDate = taskDateStr === todayStr && task.status === 'Pending';
         } else if (startDate || endDate) {
             const start = startDate ? new Date(startDate).getTime() : -Infinity;
@@ -321,6 +321,7 @@ function App() {
                     <option value="All">All Status</option>
                     <option value="Pending">Pending</option>
                     <option value="Completed">Completed</option>
+                    <option value="Missed">Missed</option>
                   </select>
                 </div>
 
@@ -500,7 +501,7 @@ function App() {
                         } else {
                           const newTask: Task = {
                             ...data,
-                            id: tasks.length + 1,
+                            id: Date.now(),
                             status: 'Pending'
                           };
                           setTasks(prev => [newTask, ...prev]);

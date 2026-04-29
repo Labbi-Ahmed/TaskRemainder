@@ -47,7 +47,7 @@ describe('LoginPage', () => {
     fireEvent.click(signInButton);
 
     expect(signInButton).toHaveAttribute('disabled');
-    expect(screen.getByText(/sign in/i)).toBeInTheDocument(); // Button text should still be "Sign in"
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument(); // Button text should still be "Sign in"
     expect(screen.getByRole('button', { name: /sign in/i })).toContainHTML('<svg'); // Check for spinner
   });
 

@@ -4,12 +4,14 @@ import Select from '../Common/Select';
 import SearchableSelect from '../Common/SearchableSelect';
 import Textarea from '../Common/Textarea';
 import Button from '../Common/Button';
-import { Category, Tag, TimeSlot } from '../../types';
+import { Category, Tag, Task, TimeSlot } from '../../types';
+
+type TaskFormData = Omit<Task, 'id' | 'status'>;
 
 interface TaskFormProps {
   onCancel: () => void;
-  onSubmit: (taskData: any) => void;
-  initialData?: any;
+  onSubmit: (taskData: TaskFormData) => void;
+  initialData?: Task | null;
   categories: Category[];
   tags: Tag[];
   timeSlots: TimeSlot[];
@@ -132,7 +134,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
         return tag.categoryId === (formData.category || undefined);
       });
 
-      const taskData = {
+      const taskData: TaskFormData = {
         ...formData,
         tags: validTags,
         dueDate: scheduleSelection === 'custom' ? new Date(formData.dueDate).toISOString() : undefined,

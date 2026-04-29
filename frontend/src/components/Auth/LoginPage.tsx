@@ -30,7 +30,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggle, onLogin }) => {
     }
 
     try {
-      console.log('Attempting login with:', { email, password });
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -61,7 +60,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggle, onLogin }) => {
 
   return (
     <AuthLayout
-      title="TaskRemainder"
+      title="TaskReminder"
       subtitle="Sign in to your account"
       icon={loginIcon}
     >
