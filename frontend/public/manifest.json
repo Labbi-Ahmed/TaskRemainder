@@ -8,9 +8,9 @@
     "default_title": "Open TaskReminder"
   },
   "icons": {
-    "16": "logo192.png",
-    "48": "logo192.png",
-    "128": "logo512.png"
+    "16": "icon.svg",
+    "48": "icon.svg",
+    "128": "icon.svg"
   },
   "permissions": [
     "storage"
