@@ -10,7 +10,7 @@ interface TaskDetailModalProps {
   tags: Tag[];
   timeSlots: TimeSlot[];
   onEdit?: (task: Task) => void;
-  onDelete?: (taskId: number) => void;
+  onDelete?: (taskId: string) => void;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({

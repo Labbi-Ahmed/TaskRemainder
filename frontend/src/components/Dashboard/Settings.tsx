@@ -26,6 +26,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateSettings }) => {
   );
 
   const [isRegistering, setIsRegistering] = useState(false);
+  const [pushError, setPushError] = useState('');
 
   const handleToggle = async (key: keyof NotificationSettings) => {
     if (key === 'pushEnabled' && !settings.pushEnabled) {
@@ -35,13 +36,12 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateSettings }) => {
       setIsRegistering(false);
       
       if (token) {
-        // Here you would typically send the token to your backend
-        console.log('FCM Token received, ready for backend:', token);
+        setPushError('');
         const newSettings = { ...settings, [key]: true };
         setSettings(newSettings);
         onUpdateSettings(newSettings);
       } else {
-        alert('Could not enable push notifications. Please check permissions.');
+        setPushError('Could not enable push notifications. Please check browser permissions.');
       }
       return;
     }
@@ -51,7 +51,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateSettings }) => {
     onUpdateSettings(newSettings);
   };
 
-  const handleSelectChange = (key: keyof NotificationSettings, value: any) => {
+  const handleSelectChange = (key: keyof NotificationSettings, value: number) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
     onUpdateSettings(newSettings);
@@ -127,17 +127,20 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateSettings }) => {
                     </p>
                 </div>
             </div>
-            {permissionStatus !== 'granted' && (
-                <div className="flex-shrink-0 w-full sm:w-auto">
-                    <Button 
-                        onClick={requestNotificationPermission} 
-                        fullWidth={false}
-                        className="px-4 py-1.5 text-xs whitespace-nowrap"
-                    >
-                        Enable Alerts
-                    </Button>
-                </div>
-            )}
+            <div className="flex flex-col items-end gap-2">
+              {pushError && (
+                <p className="text-xs text-red-600 font-medium text-right max-w-xs">{pushError}</p>
+              )}
+              {permissionStatus !== 'granted' && (
+                <Button
+                  onClick={requestNotificationPermission}
+                  fullWidth={false}
+                  className="px-4 py-1.5 text-xs whitespace-nowrap"
+                >
+                  Enable Alerts
+                </Button>
+              )}
+            </div>
         </div>
 
         {/* Primary Notification Channels */}

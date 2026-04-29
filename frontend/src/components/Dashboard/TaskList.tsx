@@ -14,9 +14,9 @@ interface TaskListProps {
   title?: string;
   showViewAll?: boolean;
   onViewChange?: () => void;
-  onToggleStatus?: (taskId: number) => void;
+  onToggleStatus?: (taskId: string) => void;
   onEdit?: (task: Task) => void;
-  onDelete?: (taskId: number) => void;
+  onDelete?: (taskId: string) => void;
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -34,7 +34,7 @@ const TaskList: React.FC<TaskListProps> = ({
   onEdit,
   onDelete
 }) => {
-  const [activeMenu, setActiveMenu] = useState<number | null>(null);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [menuDirection, setMenuDirection] = useState<'down' | 'up'>('down');
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   
@@ -43,7 +43,7 @@ const TaskList: React.FC<TaskListProps> = ({
   const [isPaginationLoading, setIsPaginationLoading] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
+  const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Reset pagination when tasks change (e.g. filter changes from parent)
@@ -68,7 +68,7 @@ const TaskList: React.FC<TaskListProps> = ({
     };
   }, []);
 
-  const handleMenuToggle = (taskId: number) => {
+  const handleMenuToggle = (taskId: string) => {
     if (activeMenu === taskId) {
       setActiveMenu(null);
     } else {
@@ -134,7 +134,7 @@ const TaskList: React.FC<TaskListProps> = ({
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     type: 'delete' | 'status';
-    taskId: number | null;
+    taskId: string | null;
     taskTitle: string;
   }>({
     isOpen: false,

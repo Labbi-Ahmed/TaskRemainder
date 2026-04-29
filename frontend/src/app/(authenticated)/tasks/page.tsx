@@ -5,6 +5,7 @@ import { useTaskContext } from '../../../context/TaskContext';
 import TaskList from '../../../components/Dashboard/TaskList';
 import TaskForm from '../../../components/Dashboard/TaskForm';
 import Calendar from '../../../components/Common/Calendar';
+import { Task } from '../../../types';
 
 function TasksContent() {
   const searchParams = useSearchParams();
@@ -20,7 +21,7 @@ function TasksContent() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<any>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
     if (filterParam) {
@@ -33,10 +34,11 @@ function TasksContent() {
     
     // Status Filter logic
     let matchesStatus = true;
-    const todayStr = new Date('2026-04-28').toISOString().split('T')[0];
-    const dayOfWeek = new Date('2026-04-28').getDay();
-    const dayOfMonth = new Date('2026-04-28').getDate();
-    const now = new Date('2026-04-28').getTime();
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const dayOfWeek = today.getDay();
+    const dayOfMonth = today.getDate();
+    const now = today.getTime();
 
     // Find which buckets are "active" today
     const activeTodaySlots = timeSlots.filter(slot => {
@@ -47,11 +49,11 @@ function TasksContent() {
     }).map(s => s.id);
 
     if (statusFilter === 'Today') {
-      const isDueToday = task.dueDate?.startsWith(todayStr);
-      const isSlotToday = task.timeSlotId && activeTodaySlots.includes(task.timeSlotId);
+      const isDueToday = !!task.dueDate?.startsWith(todayStr);
+      const isSlotToday = !!(task.timeSlotId && activeTodaySlots.includes(task.timeSlotId));
       matchesStatus = (isDueToday || isSlotToday) && task.status === 'Pending';
     } else if (statusFilter === 'Overdue') {
-      matchesStatus = task.status === 'Pending' && task.dueDate && new Date(task.dueDate).getTime() < now;
+      matchesStatus = task.status === 'Pending' && !!task.dueDate && new Date(task.dueDate).getTime() < now;
     } else if (statusFilter !== 'All') {
       matchesStatus = task.status === statusFilter;
     }
@@ -212,7 +214,7 @@ function TasksContent() {
                 timeSlots={timeSlots}
                 onCancel={() => setEditingTask(null)} 
                 onSubmit={(data) => {
-                  setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...data } : t));
+                  setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...data, updatedAt: new Date().toISOString() } : t));
                   setEditingTask(null);
                 }} 
               />

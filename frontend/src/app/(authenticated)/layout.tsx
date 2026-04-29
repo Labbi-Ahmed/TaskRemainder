@@ -6,18 +6,20 @@ import Sidebar from '../../components/Layout/Sidebar';
 import UserBadge from '../../components/Common/UserBadge';
 import { authUtils } from '../../utils/auth';
 import TaskForm from '../../components/Dashboard/TaskForm';
-import { Task } from '../../types';
 
 function AuthenticatedLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, tasks, setTasks, categories, tags, timeSlots } = useTaskContext();
+  const { user, addTask, categories, tags, timeSlots } = useTaskContext();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     if (!authUtils.isAuthenticated()) {
       router.push('/login');
+    } else {
+      setAuthChecked(true);
     }
   }, [router]);
 
@@ -33,9 +35,17 @@ function AuthenticatedLayoutContent({ children }: { children: React.ReactNode })
     return lastPart.charAt(0).toUpperCase() + lastPart.slice(1).replace(/-/g, ' ');
   };
 
+  if (!authChecked) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar 
+      <Sidebar
         collapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         onLogout={handleLogout}
@@ -46,15 +56,15 @@ function AuthenticatedLayoutContent({ children }: { children: React.ReactNode })
           <div className="flex items-center">
             <h2 className="text-lg font-bold text-gray-800">{getPageTitle()}</h2>
           </div>
-          
-          <UserBadge 
-            user={user} 
-            onLogout={handleLogout} 
+
+          <UserBadge
+            user={user}
+            onLogout={handleLogout}
             onNavigate={(view) => {
               if (view === 'profile') router.push('/settings/profile');
               else if (view === 'settings') router.push('/settings');
               else router.push('/dashboard');
-            }} 
+            }}
           />
         </header>
 
@@ -62,7 +72,7 @@ function AuthenticatedLayoutContent({ children }: { children: React.ReactNode })
           {children}
         </main>
 
-        {/* Floating Action Button - Bottom Right */}
+        {/* Floating Action Button */}
         <button
           onClick={() => setIsTaskModalOpen(true)}
           className="fixed bottom-8 right-8 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-200 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 z-40 group"
@@ -77,29 +87,23 @@ function AuthenticatedLayoutContent({ children }: { children: React.ReactNode })
         </button>
       </div>
 
-      {/* Global Task Modal */}
       {isTaskModalOpen && (
         <div className="fixed inset-0 z-[100] overflow-y-auto">
-          <div 
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" 
+          <div
+            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
             onClick={() => setIsTaskModalOpen(false)}
           />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-2xl transform transition-all animate-in fade-in zoom-in duration-200">
-              <TaskForm 
+              <TaskForm
                 categories={categories}
                 tags={tags}
                 timeSlots={timeSlots}
-                onCancel={() => setIsTaskModalOpen(false)} 
+                onCancel={() => setIsTaskModalOpen(false)}
                 onSubmit={(data) => {
-                  const newTask: Task = {
-                    ...data,
-                    id: Date.now(),
-                    status: 'Pending'
-                  };
-                  setTasks(prev => [newTask, ...prev]);
+                  addTask(data);
                   setIsTaskModalOpen(false);
-                }} 
+                }}
               />
             </div>
           </div>

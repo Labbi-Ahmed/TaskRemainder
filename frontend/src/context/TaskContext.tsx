@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { Category, Tag, Task, TimeSlot, User, NotificationSettings } from '../types';
+import { Category, Tag, Task, TaskFormData, TimeSlot, User, NotificationSettings } from '../types';
 import { authUtils } from '../utils/auth';
 
 interface TaskContextType {
@@ -22,8 +22,9 @@ interface TaskContextType {
   addSlot: (slot: Omit<TimeSlot, 'id'>) => void;
   deleteSlot: (id: string) => void;
   updateSlot: (id: string, updatedSlot: Omit<TimeSlot, 'id'>) => void;
-  toggleTaskStatus: (taskId: number) => void;
-  deleteTask: (taskId: number) => void;
+  addTask: (data: TaskFormData) => void;
+  toggleTaskStatus: (taskId: string) => void;
+  deleteTask: (taskId: string) => void;
   updateSettings: (newSettings: NotificationSettings) => void;
   counts: {
     all: number;
@@ -36,11 +37,12 @@ interface TaskContextType {
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
+const SAMPLE_DATE = '2026-01-01T00:00:00.000Z';
+
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // User Profile State
   const [user, setUser] = useState<User>(() => ({
     firstName: 'Ahmed',
     lastName: 'Labbi',
@@ -56,19 +58,14 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }));
 
-  // Categories State
   const [categories, setCategories] = useState<Category[]>([]);
-  // Tags State
   const [tags, setTags] = useState<Tag[]>([]);
-  // Time Slots State
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  // Tasks State
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     setMounted(true);
-    
-    // Load data from localStorage on mount
+
     const savedUser = localStorage.getItem('user_profile');
     if (savedUser) setUser(JSON.parse(savedUser));
 
@@ -97,17 +94,16 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const savedTasks = localStorage.getItem('task_items');
     setTasks(savedTasks ? JSON.parse(savedTasks) : [
-      { id: 1, title: 'Learn Advanced React Patterns', timeSlotId: '4', priority: 'High', status: 'Pending', category: '3', tags: ['3'] },
-      { id: 2, title: 'Weekly Market Research', timeSlotId: '5', priority: 'Medium', status: 'Pending', category: '1', tags: ['2'] },
-      { id: 3, title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed', category: '1', tags: ['2'] },
-      { id: 4, title: 'Quick: JavaScript Deep Dive', timeSlotId: '2', priority: 'High', status: 'Pending', category: '3', tags: ['1'] },
-      { id: 5, title: 'Check new YouTube tutorials', timeSlotId: '1', priority: 'Low', status: 'Pending', category: '3', tags: ['1', '3'] },
+      { id: '1', title: 'Learn Advanced React Patterns', timeSlotId: '4', priority: 'High', status: 'Pending', category: '3', tags: ['3'], createdAt: SAMPLE_DATE, updatedAt: SAMPLE_DATE },
+      { id: '2', title: 'Weekly Market Research', timeSlotId: '5', priority: 'Medium', status: 'Pending', category: '1', tags: ['2'], createdAt: SAMPLE_DATE, updatedAt: SAMPLE_DATE },
+      { id: '3', title: 'Update documentation', dueDate: '2026-04-23T09:00:00Z', priority: 'Low', status: 'Completed', category: '1', tags: ['2'], createdAt: SAMPLE_DATE, updatedAt: SAMPLE_DATE },
+      { id: '4', title: 'Quick: JavaScript Deep Dive', timeSlotId: '2', priority: 'High', status: 'Pending', category: '3', tags: ['1'], createdAt: SAMPLE_DATE, updatedAt: SAMPLE_DATE },
+      { id: '5', title: 'Check new YouTube tutorials', timeSlotId: '1', priority: 'Low', status: 'Pending', category: '3', tags: ['1', '3'], createdAt: SAMPLE_DATE, updatedAt: SAMPLE_DATE },
     ]);
 
     setIsLoading(false);
   }, []);
 
-  // Persistence Effects
   useEffect(() => {
     if (mounted) localStorage.setItem('user_profile', JSON.stringify(user));
   }, [user, mounted]);
@@ -128,10 +124,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (mounted) localStorage.setItem('task_items', JSON.stringify(tasks));
   }, [tasks, mounted]);
 
-  // Actions
   const addCategory = (category: Omit<Category, 'id'>) => {
-    const newCategory = { ...category, id: Math.random().toString(36).substr(2, 9) };
-    setCategories(prev => [...prev, newCategory]);
+    setCategories(prev => [...prev, { ...category, id: crypto.randomUUID() }]);
   };
 
   const deleteCategory = (id: string) => {
@@ -143,8 +137,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addTag = (tag: Omit<Tag, 'id'>) => {
-    const newTag = { ...tag, id: Math.random().toString(36).substr(2, 9) };
-    setTags(prev => [...prev, newTag]);
+    setTags(prev => [...prev, { ...tag, id: crypto.randomUUID() }]);
   };
 
   const deleteTag = (id: string) => {
@@ -156,8 +149,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addSlot = (slot: Omit<TimeSlot, 'id'>) => {
-    const newSlot = { ...slot, id: Math.random().toString(36).substr(2, 9) };
-    setTimeSlots(prev => [...prev, newSlot]);
+    setTimeSlots(prev => [...prev, { ...slot, id: crypto.randomUUID() }]);
   };
 
   const deleteSlot = (id: string) => {
@@ -169,28 +161,40 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeSlots(prev => prev.map(s => s.id === id ? { ...s, ...updatedSlot } : s));
   };
 
-  const toggleTaskStatus = (taskId: number) => {
-    setTasks(prevTasks => 
-      prevTasks.map(task => 
-        task.id === taskId 
-          ? { ...task, status: task.status === 'Completed' ? 'Pending' : 'Completed' }
+  const addTask = (data: TaskFormData) => {
+    const now = new Date().toISOString();
+    const newTask: Task = {
+      ...data,
+      id: crypto.randomUUID(),
+      status: 'Pending',
+      createdAt: now,
+      updatedAt: now,
+    };
+    setTasks(prev => [newTask, ...prev]);
+  };
+
+  const toggleTaskStatus = (taskId: string) => {
+    const now = new Date().toISOString();
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === taskId
+          ? { ...task, status: task.status === 'Completed' ? 'Pending' : 'Completed', updatedAt: now }
           : task
       )
     );
   };
 
-  const deleteTask = (taskId: number) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+  const deleteTask = (taskId: string) => {
+    setTasks(prev => prev.filter(task => task.id !== taskId));
   };
 
   const updateSettings = (newSettings: NotificationSettings) => {
     setUser(prev => ({ ...prev, settings: newSettings }));
   };
 
-  // Counts
   const counts = useMemo(() => {
-    const todayStr = new Date('2026-04-28').toISOString().split('T')[0];
-    const now = new Date('2026-04-28').getTime();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const now = new Date().getTime();
 
     return {
       all: tasks.length,
@@ -220,6 +224,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addSlot,
     deleteSlot,
     updateSlot,
+    addTask,
     toggleTaskStatus,
     deleteTask,
     updateSettings,

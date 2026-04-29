@@ -6,13 +6,14 @@ import { useTaskContext } from '../../../context/TaskContext';
 import TaskForm from '../../../components/Dashboard/TaskForm';
 import { Task } from '../../../types';
 
+
 export default function DashboardOverviewPage() {
   const router = useRouter();
   const { tasks, categories, tags, timeSlots, isLoading, toggleTaskStatus, deleteTask, setTasks } = useTaskContext();
-  const [editingTask, setEditingTask] = useState<any>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const handleEditTask = (task: any) => {
+  const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setIsEditModalOpen(true);
   };
@@ -48,8 +49,8 @@ export default function DashboardOverviewPage() {
           />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-2xl transform transition-all animate-in fade-in zoom-in duration-200">
-              <TaskForm 
-                initialData={editingTask}
+              <TaskForm
+                initialData={editingTask ?? undefined}
                 categories={categories}
                 tags={tags}
                 timeSlots={timeSlots}
@@ -58,7 +59,8 @@ export default function DashboardOverviewPage() {
                   setEditingTask(null);
                 }} 
                 onSubmit={(data) => {
-                  setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...data } : t));
+                  if (!editingTask) return;
+                  setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...data, updatedAt: new Date().toISOString() } : t));
                   setIsEditModalOpen(false);
                   setEditingTask(null);
                 }} 

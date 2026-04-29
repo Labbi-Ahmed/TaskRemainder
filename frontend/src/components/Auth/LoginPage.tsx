@@ -31,11 +31,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggle, onLogin }) => {
     }
 
     try {
-      console.log('Attempting login with:', { email, password });
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Mock successful login
       authUtils.setToken('mock-jwt-token');
       authUtils.setUser({
         id: 1,
@@ -44,9 +39,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggle, onLogin }) => {
       });
 
       setSuccess('Login successful! Redirecting...');
-      setTimeout(() => {
-        if (onLogin) onLogin();
-      }, 500);
+      if (onLogin) onLogin();
     } catch (err) {
       setError('Login failed. Please check your credentials.');
     } finally {
@@ -62,7 +55,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggle, onLogin }) => {
 
   return (
     <AuthLayout
-      title="TaskRemainder"
+      title="TaskReminder"
       subtitle="Sign in to your account"
       icon={loginIcon}
     >

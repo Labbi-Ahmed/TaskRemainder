@@ -5,12 +5,12 @@ import Select from '../Common/Select';
 import SearchableSelect from '../Common/SearchableSelect';
 import Textarea from '../Common/Textarea';
 import Button from '../Common/Button';
-import { Category, Tag, TimeSlot } from '../../types';
+import { Category, Tag, Task, TaskFormData, TimeSlot } from '../../types';
 
 interface TaskFormProps {
   onCancel: () => void;
-  onSubmit: (taskData: any) => void;
-  initialData?: any;
+  onSubmit: (taskData: TaskFormData) => void;
+  initialData?: Task;
   categories: Category[];
   tags: Tag[];
   timeSlots: TimeSlot[];
@@ -124,25 +124,22 @@ const TaskForm: React.FC<TaskFormProps> = ({ onCancel, onSubmit, initialData, ca
 
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      
       const validTags = formData.tags.filter(tagId => {
         const tag = tags.find(t => t.id === tagId);
         if (!tag) return false;
         return tag.categoryId === (formData.category || undefined);
       });
 
-      const taskData = {
+      const taskData: TaskFormData = {
         ...formData,
         tags: validTags,
         dueDate: scheduleSelection === 'custom' ? new Date(formData.dueDate).toISOString() : undefined,
-        timeSlotId: scheduleSelection !== 'custom' ? scheduleSelection : undefined
+        timeSlotId: scheduleSelection !== 'custom' ? scheduleSelection : undefined,
       };
-      
+
       onSubmit(taskData);
-    } catch (error) {
-      console.error('Failed to submit task:', error);
+    } catch {
+      // form submission failed silently
     } finally {
       setIsSubmitting(false);
     }

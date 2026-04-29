@@ -25,9 +25,9 @@ interface DashboardProps {
   isLoading?: boolean;
   onNewTask?: () => void;
   onViewChange?: (view: string) => void;
-  onToggleStatus?: (taskId: number) => void;
+  onToggleStatus?: (taskId: string) => void;
   onEdit?: (task: Task) => void;
-  onDelete?: (taskId: number) => void;
+  onDelete?: (taskId: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
@@ -58,11 +58,10 @@ const Dashboard: React.FC<DashboardProps> = ({
     const fetchDashboardData = async () => {
       if (propLoading === undefined) setInternalLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        const todayStr = new Date('2026-04-28').toISOString().split('T')[0];
-        const dayOfWeek = new Date('2026-04-28').getDay();
-        const dayOfMonth = new Date('2026-04-28').getDate();
+          const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const dayOfWeek = today.getDay();
+        const dayOfMonth = today.getDate();
 
         // Find which buckets are "active" today
         const activeTodaySlots = timeSlots.filter(slot => {
@@ -125,8 +124,8 @@ const Dashboard: React.FC<DashboardProps> = ({
           nextReminder: nextRem,
           recentTasks: tasks.slice(0, 5)
         });
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+      } catch {
+        // dashboard data calculation failed silently
       } finally {
         if (propLoading === undefined) setInternalLoading(false);
       }

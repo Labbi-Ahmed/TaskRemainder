@@ -22,22 +22,36 @@ export interface Tag {
   id: string;
   name: string;
   color: string;
-  timeSlotId?: string; // Optional link to a predefined time slot
-  categoryId?: string; // Optional: Bind this tag to a specific category (Hybrid Model)
+  timeSlotId?: string;
+  categoryId?: string;
 }
 
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   contentLink?: string;
   description?: string;
   notes?: string;
-  dueDate?: string;     // ISO string for custom time
-  timeSlotId?: string;  // ID of the predefined time slot bucket
+  dueDate?: string;
+  timeSlotId?: string;
   priority: 'High' | 'Medium' | 'Low';
   status: 'Pending' | 'Completed' | 'Missed';
-  category?: string;    // ID of the category
-  tags?: string[];      // IDs of the tags
+  category?: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TaskFormData {
+  title: string;
+  contentLink: string;
+  description: string;
+  notes: string;
+  dueDate?: string;
+  timeSlotId?: string;
+  priority: 'High' | 'Medium' | 'Low';
+  category: string;
+  tags: string[];
 }
 
 export interface User {
@@ -54,7 +68,7 @@ export interface NotificationSettings {
   inAppEnabled: boolean;
   soundEnabled: boolean;
   dailyDigest: boolean;
-  leadTimeMinutes: number; // Remind X minutes before
-  quietHoursStart?: string; // 24h format
+  leadTimeMinutes: number;
+  quietHoursStart?: string;
   quietHoursEnd?: string;
 }
