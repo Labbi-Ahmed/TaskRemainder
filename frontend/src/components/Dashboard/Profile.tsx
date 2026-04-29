@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef } from 'react';
+import Link from 'next/link';
 import { User } from '../../types';
 import Button from '../Common/Button';
 import Input from '../Common/Input';
@@ -43,6 +44,18 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mb-6">
+        <Link 
+          href="/settings"
+          className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-indigo-600 transition-colors group"
+        >
+          <svg className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to System Settings
+        </Link>
+      </div>
+
       <header className="mb-8">
         <h1 className="text-3xl font-extrabold text-gray-900">My Profile</h1>
         <p className="mt-1 text-gray-600 italic">Manage your personal information and profile appearance.</p>

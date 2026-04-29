@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { User, NotificationSettings } from '../../types';
 import Button from '../Common/Button';
 import Select from '../Common/Select';
@@ -83,6 +84,34 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateSettings }) => {
       </header>
 
       <div className="space-y-8">
+        {/* Profile Navigation Card */}
+        <section>
+          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Personal Information</h2>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center space-x-4 min-w-0">
+              <div className="w-16 h-16 rounded-full bg-indigo-100 border-2 border-indigo-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {user.profilePicture ? (
+                  <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl font-bold text-indigo-600 uppercase">
+                    {user.firstName?.[0]}{user.lastName?.[0]}
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-lg font-bold text-gray-900 truncate">{user.firstName} {user.lastName}</h3>
+                <p className="text-sm text-gray-500 font-medium truncate">{user.email}</p>
+              </div>
+            </div>
+            <Link 
+              href="/settings/profile"
+              className="w-full sm:w-auto px-6 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-gray-800 transition-all active:scale-95 text-center"
+            >
+              Edit Profile
+            </Link>
+          </div>
+        </section>
+
         {/* Notification Health Status */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-4 min-w-0">
